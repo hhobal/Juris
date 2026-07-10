@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juris — Sistema Jurídico Interno</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- TELA DE LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-panel">
+    <div class="login-brand">
+      <span class="seal">§</span>
+      <div>
+        <div class="brand-name">Juris</div>
+        <div class="brand-sub">Gestão de processos &amp; prazos</div>
+      </div>
+    </div>
+
+    <h1>Acessar o sistema</h1>
+    <p class="login-hint">Entre com o CNPJ da empresa e sua OAB, como no acesso ao Datajuri.</p>
+
+    <form id="loginForm">
+      <label>CNPJ da empresa
+        <input type="text" id="loginCnpj" placeholder="00.000.000/0001-00" value="12.345.678/0001-90" required>
+      </label>
+      <label>Número da OAB
+        <input type="text" id="loginOab" placeholder="Ex: PR 45.211" required>
+      </label>
+      <div class="login-error" id="loginError"></div>
+      <button type="submit" class="btn-primary btn-block">Entrar</button>
+    </form>
+
+    <div class="login-demo">
+      <span>Acesso rápido de demonstração:</span>
+      <div class="demo-chips" id="demoChips"></div>
+    </div>
+  </div>
+  <div class="login-side">
+    <blockquote>
+      "O prazo não perdoa. O sistema, sim, pode lembrar por você."
+    </blockquote>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="container" id="app" hidden>
+
+  <aside class="sidebar">
+    <div class="logo">
+      <span class="seal">§</span>
+      <div>
+        <div class="brand-name">Juris</div>
+        <div class="brand-sub">Departamento Jurídico</div>
+      </div>
+    </div>
+
+    <nav>
+      <a class="menu active" data-page="dashboard"><span class="ico">◇</span>Painel</a>
+      <a class="menu" data-page="processos"><span class="ico">▤</span>Processos</a>
+      <a class="menu" data-page="kanban"><span class="ico">▦</span>Quadro de Tarefas</a>
+      <a class="menu" data-page="prazos"><span class="ico">◷</span>Prazos</a>
+      <a class="menu" data-page="advogados"><span class="ico">☰</span>Advogados</a>
+      <a class="menu" data-page="documentos"><span class="ico">▥</span>Documentos</a>
+      <a class="menu" data-page="contratos"><span class="ico">▧</span>Contratos</a>
+      <a class="menu" data-page="relatorios"><span class="ico">▩</span>Relatórios</a>
+      <a class="menu" data-page="config"><span class="ico">⚙</span>Configurações</a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="mini-stat">
+        <span id="sbPrazosCount">0</span>
+        <small>prazos nos próx. 7 dias</small>
+      </div>
+    </div>
+  </aside>
+
+  <main class="content">
+    <header>
+      <div>
+        <div class="eyebrow" id="pageEyebrow">Painel</div>
+        <h1 id="pageTitle">Visão geral do escritório</h1>
+      </div>
+
+      <div class="header-right">
+        <div class="global-search">
+          <input type="text" id="globalSearch" placeholder="Buscar processo, parte ou nº...">
+        </div>
+        <div class="user" id="userMenu">
+          <span class="avatar" id="userAvatar">?</span>
+          <div>
+            <strong id="userName">—</strong>
+            <small id="userOab">—</small>
+          </div>
+          <button class="logout-btn" id="logoutBtn" title="Sair">⏻</button>
+        </div>
+      </div>
+    </header>
+
+    <section id="pageContent"></section>
+  </main>
+</div>
+
+<!-- MODAL genérico -->
+<div class="modal-backdrop" id="modalBackdrop" hidden>
+  <div class="modal" id="modal"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="data.js"></script>
+<script src="scripts.js"></script>
+</body>
+</html>
