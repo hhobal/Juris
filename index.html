@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juris — Sistema Jurídico Interno</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- TELA DE LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-panel">
+    <div class="login-brand">
+      <span class="seal">§</span>
+      <div>
+        <div class="brand-name">Juris</div>
+        <div class="brand-sub">Gestão de processos &amp; prazos</div>
+      </div>
+    </div>
+
+    <h1>Acessar o sistema</h1>
+    <p class="login-hint">Entre com o e-mail corporativo cadastrado pelo escritório.</p>
+
+    <form id="loginForm">
+      <label>E-mail
+        <input type="email" id="loginEmail" placeholder="voce@empresaexemplo.com.br" autocomplete="username" required>
+      </label>
+      <label>Senha
+        <input type="password" id="loginSenha" placeholder="••••••••" autocomplete="current-password" required>
+      </label>
+      <div class="login-error" id="loginError"></div>
+      <button type="submit" class="btn-primary btn-block">Entrar</button>
+    </form>
+
+    <div class="login-demo">
+      <span>Acesso rápido de demonstração:</span>
+      <div class="demo-chips" id="demoChips"></div>
+    </div>
+  </div>
+  <div class="login-side">
+    <div class="login-illustration" aria-hidden="true">
+      <svg viewBox="0 0 300 320" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="scaleGlow" cx="50%" cy="45%" r="55%">
+            <stop offset="0%" stop-color="#C9A24B" stop-opacity=".35"/>
+            <stop offset="100%" stop-color="#C9A24B" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+
+        <circle class="glow-pulse" cx="150" cy="150" r="145" fill="url(#scaleGlow)"/>
+
+        <!-- pedestal -->
+        <path d="M120 272 L180 272 L192 292 L108 292 Z" fill="none" stroke="#C9A24B" stroke-width="1.6"/>
+        <line x1="150" y1="250" x2="150" y2="272" stroke="#C9A24B" stroke-width="1.6"/>
+        <!-- pole -->
+        <line x1="150" y1="70" x2="150" y2="250" stroke="#C9A24B" stroke-width="1.6"/>
+        <circle cx="150" cy="64" r="6" fill="none" stroke="#C9A24B" stroke-width="1.6"/>
+
+        <!-- beam + pans (sways gently) -->
+        <g class="scale-beam">
+          <line x1="68" y1="96" x2="232" y2="96" stroke="#C9A24B" stroke-width="1.6"/>
+          <circle cx="150" cy="96" r="4" fill="#C9A24B"/>
+
+          <g class="pan-left">
+            <line x1="68" y1="96" x2="52" y2="158" stroke="#C9A24B" stroke-width="1.2"/>
+            <line x1="68" y1="96" x2="84" y2="158" stroke="#C9A24B" stroke-width="1.2"/>
+            <path d="M44 158 Q68 186 92 158" fill="rgba(201,162,75,.14)" stroke="#C9A24B" stroke-width="1.6"/>
+          </g>
+
+          <g class="pan-right">
+            <line x1="232" y1="96" x2="216" y2="158" stroke="#C9A24B" stroke-width="1.2"/>
+            <line x1="232" y1="96" x2="248" y2="158" stroke="#C9A24B" stroke-width="1.2"/>
+            <path d="M208 158 Q232 186 256 158" fill="rgba(201,162,75,.14)" stroke="#C9A24B" stroke-width="1.6"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+    <blockquote>
+      "O prazo não perdoa. O sistema, sim, pode lembrar por você."
+    </blockquote>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="container" id="app" hidden>
+
+  <aside class="sidebar">
+    <div class="logo">
+      <span class="seal">§</span>
+      <div>
+        <div class="brand-name">Juris</div>
+        <div class="brand-sub">Departamento Jurídico</div>
+      </div>
+    </div>
+
+    <nav>
+      <a class="menu active" data-page="dashboard"><span class="ico">◇</span>Painel</a>
+      <a class="menu" data-page="processos"><span class="ico">▤</span>Processos</a>
+      <a class="menu" data-page="kanban"><span class="ico">▦</span>Quadro de Tarefas</a>
+      <a class="menu" data-page="prazos"><span class="ico">◷</span>Prazos</a>
+      <a class="menu" data-page="advogados"><span class="ico">☰</span>Advogados</a>
+      <a class="menu" data-page="documentos"><span class="ico">▥</span>Documentos</a>
+      <a class="menu" data-page="contratos"><span class="ico">▧</span>Contratos</a>
+      <a class="menu" data-page="relatorios"><span class="ico">▩</span>Relatórios</a>
+      <a class="menu" data-page="config"><span class="ico">⚙</span>Configurações</a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="mini-stat">
+        <span id="sbPrazosCount">0</span>
+        <small>prazos nos próx. 7 dias</small>
+      </div>
+    </div>
+  </aside>
+
+  <main class="content">
+    <header>
+      <div>
+        <div class="eyebrow" id="pageEyebrow">Painel</div>
+        <h1 id="pageTitle">Visão geral do escritório</h1>
+      </div>
+
+      <div class="header-right">
+        <div class="global-search">
+          <input type="text" id="globalSearch" placeholder="Buscar processo, parte ou nº...">
+        </div>
+        <div class="user" id="userMenu">
+          <span class="avatar" id="userAvatar">?</span>
+          <div>
+            <strong id="userName">—</strong>
+            <small id="userOab">—</small>
+          </div>
+          <button class="logout-btn" id="logoutBtn" title="Sair">⏻</button>
+        </div>
+      </div>
+    </header>
+
+    <section id="pageContent"></section>
+  </main>
+</div>
+
+<!-- MODAL genérico -->
+<div class="modal-backdrop" id="modalBackdrop" hidden>
+  <div class="modal" id="modal"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="data.js"></script>
+<script src="scripts.js"></script>
+</body>
+</html>
