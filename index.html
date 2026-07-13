@@ -22,14 +22,20 @@
     </div>
 
     <h1>Acessar o sistema</h1>
-    <p class="login-hint">Entre com o CNPJ da empresa e sua OAB, como no acesso ao Datajuri.</p>
+    <p class="login-hint">Entre com o e-mail corporativo cadastrado pelo escritório.</p>
 
     <form id="loginForm">
-      <label>CNPJ da empresa
-        <input type="text" id="loginCnpj" placeholder="00.000.000/0001-00" value="12.345.678/0001-90" required>
+      <label>E-mail
+        <div class="input-wrap">
+          <span class="field-ico">✉</span>
+          <input type="email" id="loginEmail" placeholder="voce@empresaexemplo.com.br" autocomplete="username" required>
+        </div>
       </label>
-      <label>Número da OAB
-        <input type="text" id="loginOab" placeholder="Ex: PR 45.211" required>
+      <label>Senha
+        <div class="input-wrap">
+          <span class="field-ico">🔒</span>
+          <input type="password" id="loginSenha" placeholder="••••••••" autocomplete="current-password" required>
+        </div>
       </label>
       <div class="login-error" id="loginError"></div>
       <button type="submit" class="btn-primary btn-block">Entrar</button>
@@ -41,6 +47,44 @@
     </div>
   </div>
   <div class="login-side">
+    <span class="login-eyebrow">Departamento Jurídico</span>
+    <div class="login-illustration" aria-hidden="true">
+      <svg viewBox="0 0 300 320" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="scaleGlow" cx="50%" cy="45%" r="55%">
+            <stop offset="0%" stop-color="#C9A24B" stop-opacity=".35"/>
+            <stop offset="100%" stop-color="#C9A24B" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+
+        <circle class="glow-pulse" cx="150" cy="150" r="145" fill="url(#scaleGlow)"/>
+
+        <!-- pedestal -->
+        <path d="M120 272 L180 272 L192 292 L108 292 Z" fill="none" stroke="#C9A24B" stroke-width="1.6"/>
+        <line x1="150" y1="250" x2="150" y2="272" stroke="#C9A24B" stroke-width="1.6"/>
+        <!-- pole -->
+        <line x1="150" y1="70" x2="150" y2="250" stroke="#C9A24B" stroke-width="1.6"/>
+        <circle cx="150" cy="64" r="6" fill="none" stroke="#C9A24B" stroke-width="1.6"/>
+
+        <!-- beam + pans (sways gently) -->
+        <g class="scale-beam">
+          <line x1="68" y1="96" x2="232" y2="96" stroke="#C9A24B" stroke-width="1.6"/>
+          <circle cx="150" cy="96" r="4" fill="#C9A24B"/>
+
+          <g class="pan-left">
+            <line x1="68" y1="96" x2="52" y2="158" stroke="#C9A24B" stroke-width="1.2"/>
+            <line x1="68" y1="96" x2="84" y2="158" stroke="#C9A24B" stroke-width="1.2"/>
+            <path d="M44 158 Q68 186 92 158" fill="rgba(201,162,75,.14)" stroke="#C9A24B" stroke-width="1.6"/>
+          </g>
+
+          <g class="pan-right">
+            <line x1="232" y1="96" x2="216" y2="158" stroke="#C9A24B" stroke-width="1.2"/>
+            <line x1="232" y1="96" x2="248" y2="158" stroke="#C9A24B" stroke-width="1.2"/>
+            <path d="M208 158 Q232 186 256 158" fill="rgba(201,162,75,.14)" stroke="#C9A24B" stroke-width="1.6"/>
+          </g>
+        </g>
+      </svg>
+    </div>
     <blockquote>
       "O prazo não perdoa. O sistema, sim, pode lembrar por você."
     </blockquote>
@@ -61,6 +105,7 @@
 
     <nav>
       <a class="menu active" data-page="dashboard"><span class="ico">◇</span>Painel</a>
+      <a class="menu" data-page="busca"><span class="ico">⌕</span>Busca de Processos</a>
       <a class="menu" data-page="processos"><span class="ico">▤</span>Processos</a>
       <a class="menu" data-page="kanban"><span class="ico">▦</span>Quadro de Tarefas</a>
       <a class="menu" data-page="prazos"><span class="ico">◷</span>Prazos</a>
@@ -112,6 +157,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script type="module" src="supabase-client.js"></script>
 <script src="data.js"></script>
 <script src="scripts.js"></script>
 </body>
