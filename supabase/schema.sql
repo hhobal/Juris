@@ -59,8 +59,9 @@ create table processos (
 -- ----------------------------------------------------------
 create table tarefas (
   id uuid primary key default gen_random_uuid(),
-  processo_numero text references processos(numero) on delete set null,
+  processo_numero text,
   titulo text not null,
+  descricao text,
   advogado_id uuid references advogados(id),
   coluna text default 'fazer',
   prioridade text default 'media',
@@ -109,6 +110,16 @@ create policy "authenticated all tarefas" on tarefas for all
   using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "authenticated all prazos" on prazos for all
   using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
+-- ==========================================================
+-- ALTERAÇÕES (rode isso se você já executou o schema antes)
+-- 1) a coluna "descricao" foi adicionada às tarefas depois
+-- 2) processo_numero em tarefas virou texto livre/opcional, igual
+--    já era em prazos — então tira a trava de chave estrangeira
+--    (senão uma tarefa sem processo cadastrado não salva)
+-- ==========================================================
+alter table tarefas add column if not exists descricao text;
+alter table tarefas drop constraint if exists tarefas_processo_numero_fkey;
 
 -- ==========================================================
 -- DADOS DE EXEMPLO (opcional — mesmos dados do data.js)

@@ -84,54 +84,132 @@ window.supabaseAuthenticate = async function (email, senha) {
 };
 
 /* ==========================================================
-   Helpers de CRUD para os Prazos — modelo para migrar as
-   outras abas (Processos, Tarefas) do mesmo jeito.
-   Os nomes de coluna no banco são snake_case; aqui já devolvo
-   no formato camelCase que scripts.js usa (numeroProcesso,
-   parteAutora, advogadoId, etc.) para trocar o menos possível
-   de código na hora de ligar isso.
+   CAMADA DE DADOS
+   Tudo aqui é exposto em window.supabaseSync para o scripts.js
+   (script clássico) chamar. Nomes de coluna no banco são
+   snake_case; aqui sempre devolvo/recebo no formato camelCase
+   que o resto do app já usa (numeroProcesso, advogadoId, etc.).
+
+   Padrão para criar/editar (salvarX):
+   - tem "id" (tarefas/prazos, que usam uuid gerado pelo banco)
+     -> UPDATE, e devolve o mesmo id
+   - não tem "id" -> INSERT, e o Supabase gera o uuid; a função
+     devolve esse id para o scripts.js guardar no registro local
+   - processos usam "numero" como identificador natural (é
+     único na tabela), então lá é sempre um UPSERT por numero
    ========================================================== */
 
-function prazoFromRow(r) {
+function rowToAdvogado(r) {
+  return { id: r.id, nome: r.nome, oab: r.oab, cargo: r.cargo, cor: r.cor, iniciais: r.iniciais, email: r.email };
+}
+
+function rowToProcesso(r) {
   return {
-    id: r.id,
-    numeroProcesso: r.numero_processo,
-    parteAutora: r.parte_autora,
-    estado: r.estado,
-    descricao: r.descricao,
-    tipo: r.tipo,
-    advogadoId: r.advogado_id,
-    vencimento: r.vencimento
+    numero: r.numero, parte: r.parte, tipo: r.tipo, tribunal: r.tribunal, vara: r.vara,
+    advogadoId: r.advogado_id, status: r.status, fase: r.fase, valorCausa: r.valor_causa,
+    distribuicao: r.distribuicao, ultimaMov: r.ultima_mov
+  };
+}
+function processoToRow(p) {
+  return {
+    numero: p.numero, parte: p.parte, tipo: p.tipo, tribunal: p.tribunal, vara: p.vara,
+    advogado_id: p.advogadoId, status: p.status, fase: p.fase, valor_causa: p.valorCausa,
+    distribuicao: p.distribuicao || null, ultima_mov: p.ultimaMov
   };
 }
 
-export async function listarPrazos() {
-  const { data, error } = await supabase.from("prazos").select("*").order("vencimento");
-  if (error) { console.error(error); return []; }
-  return data.map(prazoFromRow);
+function rowToTarefa(r) {
+  return {
+    id: r.id, processoNumero: r.processo_numero, titulo: r.titulo, descricao: r.descricao,
+    advogadoId: r.advogado_id, coluna: r.coluna, prioridade: r.prioridade, prazo: r.prazo
+  };
+}
+function tarefaToRow(t) {
+  return {
+    processo_numero: t.processoNumero || null, titulo: t.titulo, descricao: t.descricao || null,
+    advogado_id: t.advogadoId, coluna: t.coluna, prioridade: t.prioridade, prazo: t.prazo
+  };
 }
 
-export async function salvarPrazo(prazo) {
-  const row = {
-    numero_processo: prazo.numeroProcesso,
-    parte_autora: prazo.parteAutora,
-    estado: prazo.estado,
-    descricao: prazo.descricao,
-    tipo: prazo.tipo,
-    advogado_id: prazo.advogadoId,
-    vencimento: prazo.vencimento
+function rowToPrazo(r) {
+  return {
+    id: r.id, numeroProcesso: r.numero_processo, parteAutora: r.parte_autora, estado: r.estado,
+    descricao: r.descricao, tipo: r.tipo, advogadoId: r.advogado_id, vencimento: r.vencimento
   };
+}
+function prazoToRow(p) {
+  return {
+    numero_processo: p.numeroProcesso, parte_autora: p.parteAutora, estado: p.estado,
+    descricao: p.descricao, tipo: p.tipo, advogado_id: p.advogadoId, vencimento: p.vencimento
+  };
+}
 
-  if (prazo.id) {
-    const { error } = await supabase.from("prazos").update(row).eq("id", prazo.id);
-    if (error) console.error(error);
-  } else {
-    const { error } = await supabase.from("prazos").insert(row);
-    if (error) console.error(error);
+window.supabaseSync = {
+
+  // Carrega tudo de uma vez, chamado logo depois do login.
+  async carregarTudo() {
+    const [adv, proc, tar, prz] = await Promise.all([
+      supabase.from("advogados").select("*"),
+      supabase.from("processos").select("*"),
+      supabase.from("tarefas").select("*"),
+      supabase.from("prazos").select("*")
+    ]);
+    if (adv.error) throw new Error("advogados: " + adv.error.message);
+    if (proc.error) throw new Error("processos: " + proc.error.message);
+    if (tar.error) throw new Error("tarefas: " + tar.error.message);
+    if (prz.error) throw new Error("prazos: " + prz.error.message);
+    return {
+      advogados: adv.data.map(rowToAdvogado),
+      processos: proc.data.map(rowToProcesso),
+      tarefas: tar.data.map(rowToTarefa),
+      prazos: prz.data.map(rowToPrazo)
+    };
+  },
+
+  async salvarProcesso(p, numeroOriginal) {
+    const row = processoToRow(p);
+    if (numeroOriginal) {
+      const { error } = await supabase.from("processos").update(row).eq("numero", numeroOriginal);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabase.from("processos").insert(row);
+      if (error) throw new Error(error.message);
+    }
+  },
+  async excluirProcesso(numero) {
+    const { error } = await supabase.from("processos").delete().eq("numero", numero);
+    if (error) throw new Error(error.message);
+  },
+
+  async salvarTarefa(t) {
+    const row = tarefaToRow(t);
+    if (t.id) {
+      const { error } = await supabase.from("tarefas").update(row).eq("id", t.id);
+      if (error) throw new Error(error.message);
+      return t.id;
+    }
+    const { data, error } = await supabase.from("tarefas").insert(row).select("id").single();
+    if (error) throw new Error(error.message);
+    return data.id;
+  },
+  async excluirTarefa(id) {
+    const { error } = await supabase.from("tarefas").delete().eq("id", id);
+    if (error) throw new Error(error.message);
+  },
+
+  async salvarPrazo(p) {
+    const row = prazoToRow(p);
+    if (p.id) {
+      const { error } = await supabase.from("prazos").update(row).eq("id", p.id);
+      if (error) throw new Error(error.message);
+      return p.id;
+    }
+    const { data, error } = await supabase.from("prazos").insert(row).select("id").single();
+    if (error) throw new Error(error.message);
+    return data.id;
+  },
+  async excluirPrazo(id) {
+    const { error } = await supabase.from("prazos").delete().eq("id", id);
+    if (error) throw new Error(error.message);
   }
-}
-
-export async function excluirPrazo(id) {
-  const { error } = await supabase.from("prazos").delete().eq("id", id);
-  if (error) console.error(error);
-}
+};

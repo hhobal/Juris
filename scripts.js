@@ -157,16 +157,10 @@ function renderDemoChips() {
 
 async function authenticate(email, senha) {
   // Se supabase-client.js estiver configurado (URL + anon key preenchidos),
-  // usa o login real do Supabase Auth.
+  // usa o login real do Supabase Auth. doLogin() busca o resto dos dados
+  // (advogados, processos, tarefas, prazos) do banco logo em seguida.
   if (window.supabaseClient) {
-    const advogado = await window.supabaseAuthenticate(email, senha); // pode lançar erro com motivo
-    if (advogado && !state.advogados.some(a => a.id === advogado.id)) {
-      // garante que o perfil exista na lista local, para o cabeçalho e
-      // os <select> de responsável conseguirem exibir/usar esse advogado.
-      state.advogados.push(advogado);
-      saveState();
-    }
-    return advogado;
+    return await window.supabaseAuthenticate(email, senha); // pode lançar erro com motivo
   }
 
   // Modo demo (sem Supabase configurado): confere contra data.js
@@ -203,9 +197,23 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
   doLogin(advogado.id);
 });
 
-function doLogin(advogadoId) {
+async function doLogin(advogadoId) {
   state.currentUser = advogadoId;
   localStorage.setItem(USER_KEY, advogadoId);
+
+  if (window.supabaseClient) {
+    try {
+      const dados = await window.supabaseSync.carregarTudo();
+      state.advogados = dados.advogados;
+      state.processos = dados.processos;
+      state.tarefas = dados.tarefas;
+      state.prazos = dados.prazos;
+      saveState();
+    } catch (err) {
+      toast("Não consegui carregar os dados do Supabase: " + err.message);
+    }
+  }
+
   loginScreen.hidden = true;
   appEl.hidden = false;
   bootApp();
@@ -732,7 +740,7 @@ function wireKanbanDnD() {
       zone.classList.add("drag-over");
     });
     zone.addEventListener("dragleave", () => zone.classList.remove("drag-over"));
-    zone.addEventListener("drop", (e) => {
+    zone.addEventListener("drop", async (e) => {
       e.preventDefault();
       zone.classList.remove("drag-over");
       const dragging = pageContent.querySelector(".kcard.dragging");
@@ -741,7 +749,12 @@ function wireKanbanDnD() {
       const tarefa = state.tarefas.find(t => t.id === id);
       const novaCol = zone.dataset.col;
       const anterior = tarefa.coluna;
+      if (anterior === novaCol) return;
       tarefa.coluna = novaCol;
+      if (window.supabaseClient) {
+        try { await window.supabaseSync.salvarTarefa(tarefa); }
+        catch (err) { tarefa.coluna = anterior; toast("Erro ao salvar no Supabase: " + err.message); loadPage("kanban"); return; }
+      }
       saveState();
       loadPage("kanban");
       if (anterior !== novaCol) toast(`Tarefa movida para "${KANBAN_COLS.find(c => c.id === novaCol).label}"`);
@@ -1130,7 +1143,11 @@ function openPrazoEdit(id) {
   wirePrazoForm();
 }
 
-function deletePrazo(id) {
+async function deletePrazo(id) {
+  if (window.supabaseClient) {
+    try { await window.supabaseSync.excluirPrazo(id); }
+    catch (err) { toast("Erro ao excluir no Supabase: " + err.message); return; }
+  }
   state.prazos = state.prazos.filter(p => p.id !== id);
   saveState();
   closeModal();
@@ -1156,7 +1173,11 @@ function wireNovoProcessoBtn() {
   });
 }
 
-function deleteProcesso(numero) {
+async function deleteProcesso(numero) {
+  if (window.supabaseClient) {
+    try { await window.supabaseSync.excluirProcesso(numero); }
+    catch (err) { toast("Erro ao excluir no Supabase: " + err.message); return; }
+  }
   state.processos = state.processos.filter(p => p.numero !== numero);
   saveState();
   closeModal();
@@ -1168,7 +1189,7 @@ function deleteProcesso(numero) {
 function wireProcessoForm() {
   wireModalCommon();
   const form = document.getElementById("processoForm");
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const numeroOriginal = form.dataset.numeroOriginal;
     const dados = {
@@ -1185,14 +1206,20 @@ function wireProcessoForm() {
       ultimaMov: document.getElementById("pxUltimaMov").value.trim()
     };
 
+    if (!numeroOriginal && state.processos.some(p => p.numero === dados.numero)) {
+      alert("Já existe um processo cadastrado com esse número.");
+      return;
+    }
+
+    if (window.supabaseClient) {
+      try { await window.supabaseSync.salvarProcesso(dados, numeroOriginal || null); }
+      catch (err) { toast("Erro ao salvar no Supabase: " + err.message); return; }
+    }
+
     if (numeroOriginal) {
       const idx = state.processos.findIndex(p => p.numero === numeroOriginal);
-      if (idx > -1) state.processos[idx] = dados;
+      if (idx > -1) state.processos[idx] = dados; else state.processos.push(dados);
     } else {
-      if (state.processos.some(p => p.numero === dados.numero)) {
-        alert("Já existe um processo cadastrado com esse número.");
-        return;
-      }
       state.processos.push(dados);
     }
 
@@ -1236,7 +1263,11 @@ function openTarefaEdit(id) {
   wireTarefaForm();
 }
 
-function deleteTarefa(id) {
+async function deleteTarefa(id) {
+  if (window.supabaseClient) {
+    try { await window.supabaseSync.excluirTarefa(id); }
+    catch (err) { toast("Erro ao excluir no Supabase: " + err.message); return; }
+  }
   state.tarefas = state.tarefas.filter(t => t.id !== id);
   saveState();
   closeModal();
@@ -1248,7 +1279,7 @@ function deleteTarefa(id) {
 function wireTarefaForm() {
   wireModalCommon();
   const form = document.getElementById("tarefaForm");
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const editId = form.dataset.id;
     const dados = {
@@ -1260,12 +1291,18 @@ function wireTarefaForm() {
       coluna: document.getElementById("tColuna").value,
       prazo: new Date(document.getElementById("tPrazo").value + "T09:00:00").toISOString()
     };
+    if (editId) dados.id = editId;
+
+    if (window.supabaseClient) {
+      try { dados.id = await window.supabaseSync.salvarTarefa(dados); }
+      catch (err) { toast("Erro ao salvar no Supabase: " + err.message); return; }
+    }
 
     if (editId) {
       const idx = state.tarefas.findIndex(t => t.id === editId);
       if (idx > -1) state.tarefas[idx] = { ...state.tarefas[idx], ...dados };
     } else {
-      state.tarefas.push({ id: uid("t"), ...dados });
+      state.tarefas.push({ id: dados.id || uid("t"), ...dados });
     }
 
     saveState();
@@ -1279,7 +1316,7 @@ function wireTarefaForm() {
 function wirePrazoForm() {
   wireModalCommon();
   const form = document.getElementById("prazoForm");
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const editId = form.dataset.id;
     const dados = {
@@ -1291,12 +1328,18 @@ function wirePrazoForm() {
       tipo: document.getElementById("pTipo").value,
       vencimento: new Date(document.getElementById("pData").value + "T09:00:00").toISOString()
     };
+    if (editId) dados.id = editId;
+
+    if (window.supabaseClient) {
+      try { dados.id = await window.supabaseSync.salvarPrazo(dados); }
+      catch (err) { toast("Erro ao salvar no Supabase: " + err.message); return; }
+    }
 
     if (editId) {
       const idx = state.prazos.findIndex(p => p.id === editId);
       if (idx > -1) state.prazos[idx] = { ...state.prazos[idx], ...dados };
     } else {
-      state.prazos.push({ id: uid("p"), ...dados });
+      state.prazos.push({ id: dados.id || uid("p"), ...dados });
     }
 
     saveState();
