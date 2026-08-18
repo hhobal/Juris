@@ -16,7 +16,7 @@ Este projeto trabalha **direto em produção**: um desenvolvedor, um ambiente.
 npx supabase migration new adiciona_documentos   # cria o arquivo
 # edite o .sql em supabase/migrations/
 npx supabase db push                             # aplica em produção
-npx supabase gen types typescript --linked > ../web/src/types/database.ts
+npx supabase gen types typescript --linked > ../frontend/src/types/database.ts
 ```
 
 Só isso. Nada de clicar no painel.
@@ -122,7 +122,7 @@ service_role e pelas migrations. Elas existem para conter quem chega pelo app.
 Depois de qualquer migration:
 
 ```bash
-npx supabase gen types typescript --linked > web/src/types/database.ts
+npx supabase gen types typescript --linked > frontend/src/types/database.ts
 ```
 
 Use `--local` no lugar de `--linked` se estiver trabalhando no ambiente local.
