@@ -820,10 +820,69 @@ td{ padding:15px 10px; border-bottom:1px solid var(--border); font-size:13.5px; 
 }
 
 @media(max-width:800px){
-  .sidebar{ display:none; }
+  .container{ flex-direction:column; }
+
+  .sidebar{
+    width:auto;
+    flex-direction:row;
+    align-items:center;
+    gap:8px;
+    padding:10px 14px;
+    border-right:none;
+    border-bottom:1px solid var(--border);
+    position:sticky;
+    top:0;
+    z-index:30;
+  }
+  .sidebar .logo{ margin-bottom:0; flex-shrink:0; }
+  .sidebar .logo .brand-sub{ display:none; }
+  .sidebar-footer{ display:none; }
+
+  nav{
+    flex-direction:row;
+    gap:4px;
+    overflow-x:auto;
+    scrollbar-width:none;
+    padding-bottom:2px;
+  }
+  nav::-webkit-scrollbar{ display:none; }
+  nav a{
+    flex-shrink:0;
+    padding:8px 12px;
+    font-size:0;              /* só o ícone; o rótulo fica no title */
+    border-left:none;
+    border-bottom:2px solid transparent;
+    gap:0;
+  }
+  nav a .ico{ font-size:17px; }
+  nav a .menu-selo{ font-size:10px; margin-left:5px; }
+  nav a.active{ border-left-color:transparent; border-bottom-color:var(--gold); }
+
   .content{ padding:24px; }
   .cards, .cards-3{ grid-template-columns:1fr; }
   .kanban-board{ grid-template-columns:repeat(4, minmax(78vw, 1fr)); }
   .header-right{ width:100%; }
+  .global-search{ flex:1; }
   .global-search input{ width:100%; }
+}
+
+/* Contagem de urgência ao lado do item de menu. A informação mais importante
+   do sistema não pode exigir entrar na tela para ser vista. */
+nav a .menu-selo{
+  margin-left:auto;
+  min-width:20px;
+  padding:1px 6px;
+  border-radius:999px;
+  font-family:var(--font-mono);
+  font-size:11px;
+  font-weight:600;
+  text-align:center;
+  background:var(--red-soft);
+  color:var(--red);
+  border:1px solid var(--red);
+}
+nav a .menu-selo.atencao{
+  background:var(--gold-soft);
+  color:var(--gold);
+  border-color:var(--gold);
 }

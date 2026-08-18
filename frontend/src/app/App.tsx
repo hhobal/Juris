@@ -10,6 +10,7 @@ import { PrazosPage } from "@/features/prazos/PrazosPage";
 import { EquipePage } from "@/features/equipe/EquipePage";
 import { RelatoriosPage } from "@/features/relatorios/RelatoriosPage";
 import { ConfigPage } from "@/features/config/ConfigPage";
+import { ResultadosPage } from "@/features/buscaGeral/ResultadosPage";
 
 export function App() {
   const { data: eu, isPending } = useSessao();
@@ -39,6 +40,7 @@ export function App() {
         <Route path="/equipe" element={<EquipePage eu={eu} />} />
         <Route path="/relatorios" element={<RelatoriosPage />} />
         <Route path="/config" element={<ConfigPage eu={eu} />} />
+        <Route path="/resultados" element={<ResultadosPage />} />
         <Route path="*" element={<Navigate to="/painel" replace />} />
       </Route>
     </Routes>
