@@ -11,10 +11,17 @@
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-const SUPABASE_URL = "https://edviyoswugyoqdlgkijn.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVkdml5b3N3dWd5b3FkbGdraWpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3OTE1NzgsImV4cCI6MjA5OTM2NzU3OH0.T0Ihn5qEIsRn_Q8w_lnOq2M7NfT53gu4Evqfx4stGco";
+const SUPABASE_URL = "https://adxdacqisxsynxvcoerr.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkeGRhY3Fpc3hzeW54dmNvZXJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5ODYwNDgsImV4cCI6MjEwMjU2MjA0OH0.cggiFnKTR-pawIfFUhX5UkVK9q9SAYXYfm8GK_5pyQg";
 
-const configurado = !SUPABASE_URL.includes("SEU-PROJETO") && !SUPABASE_ANON_KEY.includes("SUA-ANON-KEY");
+// ?demo=1 na URL força o modo demonstração (login pelo data.js, dados no
+// localStorage) sem precisar apagar as duas linhas acima — serve para testar
+// a interface quando o projeto Supabase está fora do ar ou ainda não existe.
+const modoDemo = new URLSearchParams(location.search).has("demo");
+
+const configurado = !modoDemo
+  && !SUPABASE_URL.includes("SEU-PROJETO")
+  && !SUPABASE_ANON_KEY.includes("SUA-ANON-KEY");
 
 export const supabase = configurado ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
@@ -68,19 +75,54 @@ window.supabaseAuthenticate = async function (email, senha) {
 
   if (perfilError) throw new Error(perfilError.message);
 
+  // Senha certa não é o mesmo que ter acesso: quem libera é o cadastro em
+  // "advogados", feito por um administrador. Sessão encerrada nos dois casos
+  // abaixo para não deixar um token válido de quem não pode entrar.
   if (!advogado) {
-    throw new Error("Login OK, mas não existe advogado com auth_user_id ligado a este usuário. Veja o passo 3 do guia (UPDATE advogados SET auth_user_id = ...).");
+    await supabase.auth.signOut();
+    throw new Error("Este e-mail não tem acesso ao sistema. Peça a um administrador para cadastrá-lo em Advogados.");
   }
 
-  return {
-    id: advogado.id,
-    nome: advogado.nome,
-    oab: advogado.oab,
-    cargo: advogado.cargo,
-    cor: advogado.cor,
-    iniciais: advogado.iniciais,
-    email: advogado.email
-  };
+  if (advogado.ativo === false) {
+    await supabase.auth.signOut();
+    throw new Error("Este acesso foi desativado. Procure um administrador.");
+  }
+
+  return rowToAdvogado(advogado);
+};
+
+/* ==========================================================
+   RESTAURAR SESSÃO
+   Chamado pelo scripts.js na abertura da página, no lugar do
+   antigo "confia no id salvo no localStorage". Aqui quem decide
+   se a pessoa continua logada é o token do Supabase, que o
+   próprio SDK valida e renova. Devolve o perfil do advogado ou
+   null (sessão inexistente/expirada -> volta pra tela de login).
+   ========================================================== */
+window.supabaseRestoreSession = async function () {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error || !session) return null;
+
+  const { data: advogado } = await supabase
+    .from("advogados")
+    .select("*")
+    .eq("auth_user_id", session.user.id)
+    .maybeSingle();
+
+  // Perfil removido ou desativado desde o último acesso: derruba a sessão
+  // em vez de reabrir o app com um token que não vale mais nada.
+  if (!advogado || advogado.ativo === false) {
+    await supabase.auth.signOut();
+    return null;
+  }
+
+  return rowToAdvogado(advogado);
+};
+
+/* Encerra a sessão de verdade (apaga o token que o SDK guarda no
+   localStorage). Sem isso o próximo a abrir o navegador entrava direto. */
+window.supabaseSignOut = async function () {
+  try { await supabase.auth.signOut(); } catch (e) { /* já estava deslogado */ }
 };
 
 /* ==========================================================
@@ -100,7 +142,12 @@ window.supabaseAuthenticate = async function (email, senha) {
    ========================================================== */
 
 function rowToAdvogado(r) {
-  return { id: r.id, nome: r.nome, oab: r.oab, cargo: r.cargo, cor: r.cor, iniciais: r.iniciais, email: r.email };
+  return {
+    id: r.id, nome: r.nome, oab: r.oab, cargo: r.cargo, cor: r.cor,
+    iniciais: r.iniciais, email: r.email,
+    // papel decide o que a interface oferece; quem de fato barra é a RLS
+    papel: r.papel || "advogado", ativo: r.ativo !== false
+  };
 }
 
 function rowToProcesso(r) {

@@ -157,8 +157,12 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- O "defer" nos dois últimos é obrigatório: sem ele os scripts clássicos
+     rodam ANTES do módulo acima (módulo já é defer por padrão), e o
+     scripts.js iniciava sem window.supabaseClient existir ainda.
+     Com defer, os três executam nesta ordem, depois do HTML pronto. -->
 <script type="module" src="supabase-client.js"></script>
-<script src="data.js"></script>
-<script src="scripts.js"></script>
+<script defer src="data.js"></script>
+<script defer src="scripts.js"></script>
 </body>
 </html>
