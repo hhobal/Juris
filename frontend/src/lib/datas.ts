@@ -24,6 +24,16 @@ export function hoje(): DataISO {
   return `${d.getFullYear()}-${mes}-${dia}`;
 }
 
+/** Soma dias a uma data pura (n negativo subtrai), devolvendo outra data pura. */
+export function somarDias(iso: DataISO, n: number): DataISO {
+  const base = paraDataLocal(iso);
+  if (!base) return iso;
+  base.setDate(base.getDate() + n);
+  const mes = String(base.getMonth() + 1).padStart(2, "0");
+  const dia = String(base.getDate()).padStart(2, "0");
+  return `${base.getFullYear()}-${mes}-${dia}`;
+}
+
 export function formatar(iso: DataISO | null): string {
   if (!iso) return "—";
   const partes = iso.slice(0, 10).split("-");

@@ -6,12 +6,15 @@ import { chaveSessao } from "./sessao";
 import type { Advogado } from "@/types/dominio";
 
 /**
- * Editar o próprio cadastro — nome, OAB, cargo, cor. Não existe mais "editar
+ * Editar o próprio cadastro — nome, OAB, cargo, cor, tribunais. Não existe mais "editar
  * o cadastro de outro advogado": sem equipe, o único cadastro que existe
  * pra quem está logado é o dele mesmo, então a RLS ("dono edita o próprio
  * cadastro") já garante isso sozinha, sem precisar de um `id` no payload.
  */
-type Salvavel = Pick<Advogado, "nome" | "oab" | "cargo" | "cor">;
+type Salvavel = Pick<
+  Advogado,
+  "nome" | "oabNumero" | "oabUf" | "tribunaisMonitorados" | "cargo" | "cor"
+>;
 
 export function useSalvarPerfil(euId: string) {
   const qc = useQueryClient();
@@ -20,7 +23,9 @@ export function useSalvarPerfil(euId: string) {
     mutationFn: async (perfil: Salvavel) => {
       const linha = {
         nome: perfil.nome,
-        oab: perfil.oab || null,
+        oab_numero: perfil.oabNumero || null,
+        oab_uf: perfil.oabUf || null,
+        tribunais_monitorados: perfil.tribunaisMonitorados,
         cargo: perfil.cargo || null,
         cor: perfil.cor
       };

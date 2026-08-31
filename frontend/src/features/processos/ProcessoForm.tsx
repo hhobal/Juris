@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useSalvarProcesso } from "@/lib/queries/processos";
 import type { Advogado, Processo, StatusProcesso } from "@/types/dominio";
+import { Modal } from "@/app/Modal";
 
 const TIPOS = ["Trabalhista", "Cível", "Tributário", "Criminal", "Administrativo"];
 const STATUS: StatusProcesso[] = ["Em andamento", "Suspenso", "Encerrado"];
@@ -39,7 +40,7 @@ export function ProcessoForm({ eu, processo, aoFechar }: Props) {
   }
 
   return (
-    <div className="modal-backdrop show" onClick={(e) => e.target === e.currentTarget && aoFechar()}>
+    <Modal aoFechar={aoFechar}>
       <div className="modal">
         <div className="modal-head">
           <h2>{editando ? "Editar processo" : "Novo processo"}</h2>
@@ -153,6 +154,6 @@ export function ProcessoForm({ eu, processo, aoFechar }: Props) {
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   );
 }

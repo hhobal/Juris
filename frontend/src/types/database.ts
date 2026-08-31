@@ -50,7 +50,9 @@ export type Database = {
           id: string
           iniciais: string | null
           nome: string
-          oab: string | null
+          oab_numero: string | null
+          oab_uf: string | null
+          tribunais_monitorados: string[]
         }
         Insert: {
           ativo?: boolean
@@ -62,7 +64,9 @@ export type Database = {
           id?: string
           iniciais?: string | null
           nome: string
-          oab?: string | null
+          oab_numero?: string | null
+          oab_uf?: string | null
+          tribunais_monitorados?: string[]
         }
         Update: {
           ativo?: boolean
@@ -74,20 +78,50 @@ export type Database = {
           id?: string
           iniciais?: string | null
           nome?: string
-          oab?: string | null
+          oab_numero?: string | null
+          oab_uf?: string | null
+          tribunais_monitorados?: string[]
+        }
+        Relationships: []
+      }
+      compartilhamentos: {
+        Row: {
+          created_at: string
+          dono_id: string
+          email_convidado: string
+          id: string
+          processo_id: string
+        }
+        Insert: {
+          created_at?: string
+          dono_id: string
+          email_convidado: string
+          id?: string
+          processo_id: string
+        }
+        Update: {
+          created_at?: string
+          dono_id?: string
+          email_convidado?: string
+          id?: string
+          processo_id?: string
         }
         Relationships: []
       }
       prazos: {
         Row: {
           advogado_id: string | null
+          confirmado: boolean
           created_at: string | null
           created_by: string | null
           descricao: string
+          dias_uteis: number | null
           estado: string
           id: string
           numero_processo: string
+          origem: string
           parte_autora: string
+          publicacao_id: string | null
           tipo: string | null
           updated_at: string | null
           updated_by: string | null
@@ -95,13 +129,17 @@ export type Database = {
         }
         Insert: {
           advogado_id?: string | null
+          confirmado?: boolean
           created_at?: string | null
           created_by?: string | null
           descricao: string
+          dias_uteis?: number | null
           estado: string
           id?: string
           numero_processo: string
+          origem?: string
           parte_autora: string
+          publicacao_id?: string | null
           tipo?: string | null
           updated_at?: string | null
           updated_by?: string | null
@@ -109,13 +147,17 @@ export type Database = {
         }
         Update: {
           advogado_id?: string | null
+          confirmado?: boolean
           created_at?: string | null
           created_by?: string | null
           descricao?: string
+          dias_uteis?: number | null
           estado?: string
           id?: string
           numero_processo?: string
+          origem?: string
           parte_autora?: string
+          publicacao_id?: string | null
           tipo?: string | null
           updated_at?: string | null
           updated_by?: string | null
@@ -145,6 +187,69 @@ export type Database = {
           },
         ]
       }
+      publicacoes: {
+        Row: {
+          advogado_id: string
+          advogados_intimados: string[]
+          classe: string | null
+          cnj_hash: string | null
+          cnj_id: number
+          created_at: string
+          disponibilizacao: string
+          id: string
+          link: string | null
+          numero_processo: string
+          numero_processo_limpo: string
+          orgao: string | null
+          partes: string[]
+          processo_id: string | null
+          situacao: string
+          teor: string | null
+          tipo: string | null
+          tribunal: string | null
+        }
+        Insert: {
+          advogado_id: string
+          advogados_intimados?: string[]
+          classe?: string | null
+          cnj_hash?: string | null
+          cnj_id: number
+          created_at?: string
+          disponibilizacao: string
+          id?: string
+          link?: string | null
+          numero_processo: string
+          numero_processo_limpo: string
+          orgao?: string | null
+          partes?: string[]
+          processo_id?: string | null
+          situacao?: string
+          teor?: string | null
+          tipo?: string | null
+          tribunal?: string | null
+        }
+        Update: {
+          advogado_id?: string
+          advogados_intimados?: string[]
+          classe?: string | null
+          cnj_hash?: string | null
+          cnj_id?: number
+          created_at?: string
+          disponibilizacao?: string
+          id?: string
+          link?: string | null
+          numero_processo?: string
+          numero_processo_limpo?: string
+          orgao?: string | null
+          partes?: string[]
+          processo_id?: string | null
+          situacao?: string
+          teor?: string | null
+          tipo?: string | null
+          tribunal?: string | null
+        }
+        Relationships: []
+      }
       processos: {
         Row: {
           advogado_id: string | null
@@ -154,6 +259,7 @@ export type Database = {
           fase: string | null
           id: string
           numero: string
+          origem: string
           parte: string
           status: string | null
           tipo: string | null
@@ -172,6 +278,7 @@ export type Database = {
           fase?: string | null
           id?: string
           numero: string
+          origem?: string
           parte: string
           status?: string | null
           tipo?: string | null
@@ -190,6 +297,7 @@ export type Database = {
           fase?: string | null
           id?: string
           numero?: string
+          origem?: string
           parte?: string
           status?: string | null
           tipo?: string | null

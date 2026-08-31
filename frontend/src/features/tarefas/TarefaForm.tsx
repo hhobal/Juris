@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useSalvarTarefa } from "@/lib/queries/tarefas";
 import { hoje } from "@/lib/datas";
 import type { Advogado, ColunaTarefa, Prioridade, Tarefa } from "@/types/dominio";
+import { Modal } from "@/app/Modal";
 
 const COLUNAS: { id: ColunaTarefa; titulo: string }[] = [
   { id: "fazer", titulo: "A Fazer" },
@@ -49,7 +50,7 @@ export function TarefaForm({ eu, tarefa, prefill, aoFechar }: Props) {
   }
 
   return (
-    <div className="modal-backdrop show" onClick={(e) => e.target === e.currentTarget && aoFechar()}>
+    <Modal aoFechar={aoFechar}>
       <div className="modal">
         <div className="modal-head">
           <h2>{editando ? "Editar tarefa" : "Nova tarefa"}</h2>
@@ -131,6 +132,6 @@ export function TarefaForm({ eu, tarefa, prefill, aoFechar }: Props) {
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   );
 }

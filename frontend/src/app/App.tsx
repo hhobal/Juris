@@ -32,11 +32,11 @@ export function App() {
     <Routes>
       <Route element={<Shell eu={eu} />}>
         <Route path="/painel" element={<PainelPage eu={eu} />} />
-        <Route path="/busca" element={<BuscaPage />} />
+        <Route path="/busca" element={<BuscaPage eu={eu} />} />
         <Route path="/processos" element={<ProcessosPage eu={eu} />} />
         <Route path="/tarefas" element={<TarefasPage eu={eu} />} />
         <Route path="/prazos" element={<PrazosPage eu={eu} />} />
-        <Route path="/relatorios" element={<RelatoriosPage />} />
+        <Route path="/relatorios" element={<RelatoriosPage eu={eu} />} />
         <Route path="/config" element={<ConfigPage eu={eu} />} />
         <Route path="/resultados" element={<ResultadosPage />} />
         <Route path="*" element={<Navigate to="/painel" replace />} />

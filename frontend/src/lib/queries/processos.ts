@@ -25,11 +25,17 @@ function linhaParaProcesso(r: Linha): Processo {
     // coluna NOT NULL default 0 desde a migration — não volta nulo
     valorCausa: Number(r.valor_causa ?? 0),
     distribuicao: r.distribuicao,
-    ultimaMov: r.ultima_mov
+    ultimaMov: r.ultima_mov,
+    origem: r.origem === "djen" ? "djen" : "manual"
   };
 }
 
-function processoParaLinha(p: Omit<Processo, "id">): Insercao {
+/**
+ * `origem` fica de fora de propósito: quem cadastra pela tela é sempre o
+ * advogado, e o default 'manual' da coluna já diz isso. Só a importação de
+ * uma publicação escreve 'djen', e ela monta a linha por conta própria.
+ */
+function processoParaLinha(p: Omit<Processo, "id" | "origem">): Insercao {
   return {
     numero: p.numero,
     parte: p.parte,
@@ -65,7 +71,7 @@ export function useProcessos() {
 export function useSalvarProcesso() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (processo: Omit<Processo, "id"> & { id?: string }) => {
+    mutationFn: async (processo: Omit<Processo, "id" | "origem"> & { id?: string }) => {
       const linha = processoParaLinha(processo);
 
       if (processo.id) {

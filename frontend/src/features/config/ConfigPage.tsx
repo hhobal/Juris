@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MeuPerfilForm } from "./MeuPerfilForm";
+import { oabTexto } from "@/lib/queries/advogados";
 import type { Advogado } from "@/types/dominio";
 
 export function ConfigPage({ eu }: { eu: Advogado }) {
@@ -18,8 +19,14 @@ export function ConfigPage({ eu }: { eu: Advogado }) {
         <div className="detail-grid">
           <div><small>Nome</small><strong>{eu.nome}</strong></div>
           <div><small>E-mail</small><strong>{eu.email}</strong></div>
-          <div><small>OAB</small><strong>{eu.oab ?? "—"}</strong></div>
+          <div><small>OAB</small><strong>{oabTexto(eu) ?? "—"}</strong></div>
           <div><small>Cargo</small><strong>{eu.cargo ?? "—"}</strong></div>
+          <div>
+            <small>Tribunais monitorados</small>
+            <strong>
+              {eu.tribunaisMonitorados.length ? eu.tribunaisMonitorados.join(", ") : "Todos"}
+            </strong>
+          </div>
           <div>
             <small>Cor no sistema</small>
             <strong>

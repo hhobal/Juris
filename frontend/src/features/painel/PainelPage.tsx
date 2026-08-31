@@ -9,9 +9,16 @@ import type { Advogado, Prazo, Tarefa } from "@/types/dominio";
 const PRIORIDADE_LABEL: Record<string, string> = { alta: "Alta", media: "Média", baixa: "Baixa" };
 
 export function PainelPage({ eu }: { eu: Advogado }) {
-  const { data: prazos, isPending: carregandoPrazos } = usePrazos();
-  const { data: tarefas } = useTarefas();
-  const { data: processos } = useProcessos();
+  const { data: todosPrazos, isPending: carregandoPrazos } = usePrazos();
+  const { data: todasTarefas } = useTarefas();
+  const { data: todosProcessos } = useProcessos();
+
+  // Só o que é seu. Um processo que um colega compartilhou aparece na tela de
+  // Processos, mas não entra na sua carga de trabalho: contar o prazo do outro
+  // como seu seria enganoso. É a mesma regra do selo na barra lateral.
+  const prazos = (todosPrazos ?? []).filter((p) => p.advogadoId === eu.id);
+  const tarefas = (todasTarefas ?? []).filter((t) => t.advogadoId === eu.id);
+  const processos = (todosProcessos ?? []).filter((p) => p.advogadoId === eu.id);
 
   if (carregandoPrazos) return <div className="empty-state">Carregando o painel…</div>;
 

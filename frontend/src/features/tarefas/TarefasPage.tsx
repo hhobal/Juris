@@ -24,7 +24,7 @@ const PRIORIDADE_LABEL: Record<string, string> = {
 };
 
 export function TarefasPage({ eu }: { eu: Advogado }) {
-  const { data: tarefas, isPending, error } = useTarefas();
+  const { data: todasTarefas, isPending, error } = useTarefas();
   const mover = useMoverTarefa();
   const excluir = useExcluirTarefa();
 
@@ -33,6 +33,12 @@ export function TarefasPage({ eu }: { eu: Advogado }) {
   const [alvo, setAlvo] = useState<ColunaTarefa | null>(null);
 
   useAoVivo("tarefas", chaveTarefas);
+
+  // Só as suas. A RLS deixa você LER a tarefa de um processo que um colega
+  // compartilhou, mas não editar — e uma tarefa no quadro que não se deixa
+  // arrastar é pior do que uma tarefa que não está lá. Elas continuam
+  // visíveis onde fazem sentido: dentro do detalhe do processo.
+  const tarefas = (todasTarefas ?? []).filter((t) => t.advogadoId === eu.id);
 
   function aoSoltar(e: DragEvent, coluna: ColunaTarefa) {
     e.preventDefault();

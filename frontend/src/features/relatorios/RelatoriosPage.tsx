@@ -2,14 +2,19 @@ import { useProcessos } from "@/lib/queries/processos";
 import { usePrazos } from "@/lib/queries/prazos";
 import { diasAte } from "@/lib/datas";
 import { moeda } from "@/lib/formato";
-import type { Processo } from "@/types/dominio";
+import type { Advogado, Processo } from "@/types/dominio";
 
-export function RelatoriosPage() {
-  const { data: processos, isPending } = useProcessos();
-  const { data: prazos } = usePrazos();
+export function RelatoriosPage({ eu }: { eu: Advogado }) {
+  const { data: todosProcessos, isPending } = useProcessos();
+  const { data: todosPrazos } = usePrazos();
+
+  // Indicador é sobre o SEU trabalho. Processo compartilhado por um colega
+  // inflaria a contagem e a soma dos valores de causa com o que não é seu.
+  const processos = (todosProcessos ?? []).filter((p) => p.advogadoId === eu.id);
+  const prazos = (todosPrazos ?? []).filter((p) => p.advogadoId === eu.id);
 
   if (isPending) return <div className="empty-state">Carregando indicadores…</div>;
-  if (!processos?.length) {
+  if (!processos.length) {
     return <div className="empty-state">Cadastre processos para os indicadores aparecerem aqui.</div>;
   }
 

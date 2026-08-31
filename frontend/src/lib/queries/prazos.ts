@@ -21,6 +21,10 @@ function linhaParaPrazo(r: Linha): Prazo {
     // a coluna é "date": chega como "AAAA-MM-DD" e assim permanece.
     // Não converter para Date aqui — ver o comentário em lib/datas.ts.
     vencimento: r.vencimento,
+    origem: r.origem === "djen" ? "djen" : "manual",
+    confirmado: r.confirmado,
+    diasUteis: r.dias_uteis,
+    publicacaoId: r.publicacao_id,
     criadoPor: r.created_by,
     atualizadoPor: r.updated_by
   };
@@ -34,7 +38,11 @@ function prazoParaLinha(p: NovoPrazo): Insercao {
     descricao: p.descricao,
     tipo: p.tipo,
     advogado_id: p.advogadoId,
-    vencimento: p.vencimento
+    vencimento: p.vencimento,
+    origem: p.origem,
+    confirmado: p.confirmado,
+    dias_uteis: p.diasUteis,
+    publicacao_id: p.publicacaoId
   };
 }
 
@@ -75,6 +83,30 @@ export function useSalvarPrazo() {
 
       const { data, error } = await supabase.from("prazos").insert(linha).select().single();
       if (error) throw new Error(traduzirErro(error.message));
+      return linhaParaPrazo(data);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: chavePrazos })
+  });
+}
+
+/**
+ * "Eu conferi, a data está certa."
+ *
+ * É o passo que fecha o ciclo do prazo calculado: o sistema sugeriu, o
+ * advogado leu a intimação e bateu o martelo. Só ele pode fazer isso.
+ */
+export function useConfirmarPrazo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase
+        .from("prazos")
+        .update({ confirmado: true })
+        .eq("id", id)
+        .select()
+        .maybeSingle();
+      if (error) throw new Error(traduzirErro(error.message));
+      if (!data) throw new Error(naoEhSeu("prazo"));
       return linhaParaPrazo(data);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: chavePrazos })

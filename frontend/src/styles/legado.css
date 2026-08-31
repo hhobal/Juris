@@ -410,7 +410,16 @@ nav a.active .ico{ opacity:1; }
   from{ opacity:0; transform:translateY(8px); }
   to{ opacity:1; transform:translateY(0); }
 }
-.content > section{ animation:entraConteudo .35s ease both; }
+/* `backwards`, não `both`.
+   Com `both`, o estado final da animação (transform:translateY(0)) fica
+   grudado no elemento para sempre. E transform diferente de `none` faz o
+   elemento virar bloco de contenção de todo `position:fixed` que estiver
+   dentro dele — as janelas do sistema passavam a se posicionar em relação a
+   esta seção, não à tela. Com `backwards` a animação só segura o estado
+   inicial antes de começar e não deixa rastro depois de terminar.
+   As janelas hoje também saem por portal (app/Modal.tsx), então são imunes
+   a isso — mas o `.toast` continua sendo fixed aqui dentro. */
+.content > section{ animation:entraConteudo .35s ease backwards; }
 
 header{
   display:flex;
@@ -671,10 +680,20 @@ td{ padding:15px 10px; border-bottom:1px solid var(--border); font-size:13.5px; 
    MODAL
    ========================================================== */
 
+/* O padding do fundo é o que garante que o modal nunca encoste na borda da
+   tela. Sem ele, um formulário alto (Processo, Tarefa) subia até o topo e o
+   cabeçalho ficava cortado — dava para ver metade do título "Nova tarefa".
+
+   O par overflow-y no fundo + margin:auto no modal é o que centraliza sem
+   cortar: com align-items:center sozinho, conteúdo maior que a tela transborda
+   para os DOIS lados e o topo fica inalcançável, mesmo com rolagem. */
 .modal-backdrop{
   position:fixed; inset:0; background:rgba(5,8,16,.7);
   backdrop-filter:blur(3px);
   display:flex; align-items:center; justify-content:center;
+  padding:24px;
+  overflow-y:auto;
+  overscroll-behavior:contain;
   z-index:100; opacity:0; transition:opacity .15s;
 }
 .modal-backdrop.show{ opacity:1; }
@@ -685,8 +704,12 @@ td{ padding:15px 10px; border-bottom:1px solid var(--border); font-size:13.5px; 
   border-radius:var(--radius-lg);
   padding:32px;
   width:560px;
-  max-width:92vw;
-  max-height:86vh;
+  max-width:100%;
+  /* dvh acompanha a barra do navegador no celular, que vh não faz;
+     o vh fica de reserva para quem não entende dvh */
+  max-height:calc(100vh - 48px);
+  max-height:calc(100dvh - 48px);
+  margin:auto;
   overflow-y:auto;
   box-shadow:var(--shadow-2);
   transform:translateY(12px) scale(.97);
@@ -733,18 +756,25 @@ td{ padding:15px 10px; border-bottom:1px solid var(--border); font-size:13.5px; 
 .btn-secondary:hover{ border-color:var(--gold); color:var(--gold-ink); transform:translateY(-1px); }
 .btn-secondary:active{ transform:translateY(0) scale(.97); }
 
-/* forms dentro do modal */
+/* Campos de formulário.
+   `.form-modal` é o formulário de dentro de um modal; `.form-campos` é a
+   mesma aparência para quem tem campo solto numa caixa da página. Antes só
+   existia a primeira, e quem usasse `.form-row` fora de um modal — como a
+   tela de Busca — ficava com rótulo colado no campo e input sem estilo. */
 
-.form-modal label{
+.form-modal label,
+.form-campos label{
   display:block; font-size:12.5px; color:var(--text-muted); margin-bottom:14px;
 }
-.form-modal input, .form-modal select, .form-modal textarea{
+.form-modal input, .form-modal select, .form-modal textarea,
+.form-campos input, .form-campos select, .form-campos textarea{
   display:block; width:100%; margin-top:7px; padding:12px 14px;
   background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm);
   color:var(--text); font-size:13.5px; font-family:inherit;
   transition:border-color .15s, box-shadow .15s;
 }
-.form-modal input:focus, .form-modal select:focus, .form-modal textarea:focus{
+.form-modal input:focus, .form-modal select:focus, .form-modal textarea:focus,
+.form-campos input:focus, .form-campos select:focus, .form-campos textarea:focus{
   outline:none; border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft);
 }
 .form-modal textarea{ resize:vertical; min-height:56px; }
@@ -984,3 +1014,105 @@ nav a .menu-selo.atencao{
   color:var(--gold-ink);
   border-color:var(--gold);
 }
+
+/* ==========================================================
+   CARTÃO DE PUBLICAÇÃO — Busca de Processos
+
+   Antes esta tela emprestava classes do modal (.modal-actions,
+   .detail-grid) para montar os cartões. Ficava desalinhado por um
+   motivo concreto: .btn-secondary tem flex:1, feito para botão de
+   modal ocupar a largura toda. Num cartão com quatro ações, cada
+   botão esticava de um jeito e a linha nunca fechava.
+
+   Aqui as classes são próprias, os separadores são consistentes, e
+   a grade se reorganiza sozinha em tela estreita.
+   ========================================================== */
+
+.pub-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; flex-wrap:wrap;
+  margin-bottom:12px;
+}
+
+/* Número de processo é dado técnico: monoespaçado, não a serifada
+   das outras caixas — a leitura é dígito a dígito. */
+.pub-numero{
+  font-family:var(--font-mono);
+  font-size:15px; font-weight:600;
+  color:var(--text); letter-spacing:.2px;
+  word-break:break-all;
+}
+
+.pub-chips{
+  display:flex; align-items:center; gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:18px;
+}
+
+/* auto-fit resolve o responsivo sem media query: as colunas cabem
+   enquanto couberem, e viram uma só quando não couberem mais. */
+.pub-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+  gap:16px 28px;
+  padding:18px 0;
+  border-top:1px solid var(--border-soft);
+  border-bottom:1px solid var(--border-soft);
+}
+.pub-grid small{
+  display:block; margin-bottom:5px;
+  color:var(--text-muted); font-size:10.5px;
+  text-transform:uppercase; letter-spacing:.5px;
+}
+.pub-grid strong{ font-size:13px; font-weight:600; line-height:1.5; }
+
+.pub-teor{ padding-top:18px; }
+.pub-teor small{
+  display:block; margin-bottom:6px;
+  color:var(--text-muted); font-size:10.5px;
+  text-transform:uppercase; letter-spacing:.5px;
+}
+.pub-teor p{
+  font-size:13px; line-height:1.65;
+  color:var(--text-muted);
+  margin:0 0 8px;
+}
+
+.pub-acoes{
+  display:flex; align-items:center; flex-wrap:wrap; gap:10px;
+  margin-top:18px; padding-top:16px;
+  border-top:1px solid var(--border-soft);
+}
+/* Anula o flex:1 do botão de modal: aqui cada um ocupa o que precisa. */
+.pub-acoes .btn-primary,
+.pub-acoes .btn-secondary{ flex:0 0 auto; }
+/* O link para o tribunal é saída para fora do app — vai para a
+   ponta direita, longe das ações que mexem no sistema. */
+.pub-acoes .pub-externo{ margin-left:auto; }
+
+.pub-erro{ margin-top:12px; }
+
+/* Texto de ajuda logo abaixo de um campo.
+   Antes vinha com estilo inline (fontSize + marginTop negativo) e sem margem
+   embaixo, então encostava no rótulo do campo seguinte — em Configurações a
+   explicação da OAB colava no "Cargo". */
+.form-modal .campo-ajuda,
+.form-campos .campo-ajuda{
+  margin:-6px 0 16px;
+  font-size:12.5px;
+  line-height:1.55;
+  color:var(--text-muted);
+}
+
+/* Duas saídas para a mesma ação — "Salvar e confirmar" ao lado de "Salvar
+   para conferir depois". Diferente de `.modal-actions`, aqui os dois botões
+   dividem a largura e quebram para a linha de baixo quando não couberem:
+   o segundo rótulo é comprido e não pode ser cortado, porque é justamente
+   ele que explica a diferença entre os dois. */
+.acoes-duplas{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+.acoes-duplas button{ flex:1 1 190px; }

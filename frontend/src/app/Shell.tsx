@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useSair } from "@/lib/queries/sessao";
+import { oabTexto } from "@/lib/queries/advogados";
 import { usePrazos } from "@/lib/queries/prazos";
 import { diasAte } from "@/lib/datas";
 import { useTema } from "@/lib/tema";
@@ -100,7 +101,7 @@ export function Shell({ eu }: { eu: Advogado }) {
             </span>
             <div className="user-info">
               <strong>{eu.nome}</strong>
-              <small>{eu.oab ? `OAB ${eu.oab}` : eu.cargo ?? eu.email}</small>
+              <small>{oabTexto(eu) ?? eu.cargo ?? eu.email}</small>
             </div>
             <button
               className="logout-btn"

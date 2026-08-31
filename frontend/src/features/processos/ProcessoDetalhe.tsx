@@ -2,20 +2,26 @@ import { usePrazos } from "@/lib/queries/prazos";
 import { useTarefas } from "@/lib/queries/tarefas";
 import { formatar, urgencia } from "@/lib/datas";
 import { moeda } from "@/lib/formato";
-import type { Processo } from "@/types/dominio";
+import type { Advogado, Processo } from "@/types/dominio";
+import { Modal } from "@/app/Modal";
 
 interface Props {
+  eu: Advogado;
   processo: Processo;
   aoFechar: () => void;
   aoEditar: () => void;
   aoExcluir: () => void;
   aoCriarPrazo: () => void;
   aoCriarTarefa: () => void;
+  aoCompartilhar: () => void;
 }
 
 export function ProcessoDetalhe({
-  processo: p, aoFechar, aoEditar, aoExcluir, aoCriarPrazo, aoCriarTarefa
+  eu, processo: p, aoFechar, aoEditar, aoExcluir, aoCriarPrazo, aoCriarTarefa, aoCompartilhar
 }: Props) {
+  // Se o processo não é seu, ele chegou aqui por compartilhamento — a RLS não
+  // deixaria você ler de outro jeito. Leitura sim, escrita não.
+  const meu = p.advogadoId === eu.id;
   // Já estão em cache — as duas telas carregam essas listas de qualquer forma.
   const { data: prazos } = usePrazos();
   const { data: tarefas } = useTarefas();
@@ -24,7 +30,7 @@ export function ProcessoDetalhe({
   const tarefasDoProc = (tarefas ?? []).filter((x) => x.processoNumero === p.numero);
 
   return (
-    <div className="modal-backdrop show" onClick={(e) => e.target === e.currentTarget && aoFechar()}>
+    <Modal aoFechar={aoFechar}>
       <div className="modal">
         <div className="modal-head">
           <div>
@@ -37,6 +43,14 @@ export function ProcessoDetalhe({
         </div>
 
         <p className="modal-parties">{p.parte}</p>
+
+        {!meu && (
+          <p className="muted">
+            <span className="status-tag status-wait">Compartilhado com você</span>{" "}
+            Um colega liberou este processo para você acompanhar. Quem edita, apaga e
+            cria prazos aqui é quem é dono dele.
+          </p>
+        )}
 
         <div className="detail-grid">
           <div><small>Vara</small><strong>{p.vara ?? "—"}</strong></div>
@@ -93,14 +107,17 @@ export function ProcessoDetalhe({
           </div>
         )}
 
-        <div className="modal-actions">
-          <button className="btn-secondary" onClick={aoEditar}>Editar</button>
-          <button className="btn-secondary" onClick={aoExcluir}>Excluir</button>
-          <button className="btn-secondary" onClick={aoCriarTarefa}>+ Criar tarefa</button>
-          <button className="btn-secondary" onClick={aoCriarPrazo}>+ Criar prazo</button>
-        </div>
+        {meu && (
+          <div className="modal-actions" style={{ flexWrap: "wrap" }}>
+            <button className="btn-secondary" onClick={aoEditar}>Editar</button>
+            <button className="btn-secondary" onClick={aoExcluir}>Excluir</button>
+            <button className="btn-secondary" onClick={aoCriarTarefa}>+ Criar tarefa</button>
+            <button className="btn-secondary" onClick={aoCriarPrazo}>+ Criar prazo</button>
+            <button className="btn-secondary" onClick={aoCompartilhar}>Compartilhar</button>
+          </div>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 }
 

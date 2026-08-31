@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { chaveProcessos, useExcluirProcesso, useProcessos } from "@/lib/queries/processos";
 import { useAoVivo } from "@/lib/queries/realtime";
 import { normalizar } from "@/lib/formato";
 import { ProcessoDetalhe, classeStatus } from "./ProcessoDetalhe";
 import { ProcessoForm } from "./ProcessoForm";
+import { CompartilharForm } from "./CompartilharForm";
 import { PrazoForm } from "@/features/prazos/PrazoForm";
 import { TarefaForm } from "@/features/tarefas/TarefaForm";
 import type { Advogado, Prazo, Processo, Tarefa } from "@/types/dominio";
@@ -14,14 +16,23 @@ type Painel =
   | { tipo: "form"; processo: Processo | null }
   | { tipo: "novoPrazo"; prefill: Partial<Prazo> }
   | { tipo: "novaTarefa"; prefill: Partial<Tarefa> }
+  | { tipo: "compartilhar"; processo: Processo }
   | null;
 
 export function ProcessosPage({ eu }: { eu: Advogado }) {
   const { data: processos, isPending, error } = useProcessos();
   const excluir = useExcluirProcesso();
 
-  const [busca, setBusca] = useState("");
+  // ?q= deixa outra tela mandar para cá já filtrado — é assim que o botão
+  // "Ver em Processos", na Busca, abre direto no processo daquela publicação.
+  const [params] = useSearchParams();
+  const [busca, setBusca] = useState(() => params.get("q") ?? "");
   const [filtroStatus, setFiltroStatus] = useState("todos");
+
+  useEffect(() => {
+    const q = params.get("q");
+    if (q) setBusca(q);
+  }, [params]);
   const [painel, setPainel] = useState<Painel>(null);
 
   useAoVivo("processos", chaveProcessos);
@@ -93,7 +104,17 @@ export function ProcessosPage({ eu }: { eu: Advogado }) {
                   key={p.id}
                   onClick={() => setPainel({ tipo: "detalhe", processo: p })}
                 >
-                  <td className="mono">{p.numero}</td>
+                  <td className="mono">
+                    {p.numero}
+                    {p.advogadoId !== eu.id && (
+                      <>
+                        {" "}
+                        <span className="status-tag status-wait" title="Um colega compartilhou este processo com você">
+                          Compartilhado
+                        </span>
+                      </>
+                    )}
+                  </td>
                   <td>{p.parte}</td>
                   <td>{p.tipo ?? "—"}</td>
                   <td>{p.fase ?? "—"}</td>
@@ -110,8 +131,10 @@ export function ProcessosPage({ eu }: { eu: Advogado }) {
 
       {painel?.tipo === "detalhe" && (
         <ProcessoDetalhe
+          eu={eu}
           processo={painel.processo}
           aoFechar={() => setPainel(null)}
+          aoCompartilhar={() => setPainel({ tipo: "compartilhar", processo: painel.processo })}
           aoEditar={() => setPainel({ tipo: "form", processo: painel.processo })}
           aoExcluir={() => {
             if (confirm(`Remover o processo ${painel.processo.numero}?`)) {
@@ -140,6 +163,10 @@ export function ProcessosPage({ eu }: { eu: Advogado }) {
 
       {painel?.tipo === "form" && (
         <ProcessoForm eu={eu} processo={painel.processo} aoFechar={() => setPainel(null)} />
+      )}
+
+      {painel?.tipo === "compartilhar" && (
+        <CompartilharForm eu={eu} processo={painel.processo} aoFechar={() => setPainel(null)} />
       )}
 
       {painel?.tipo === "novoPrazo" && (
