@@ -16,11 +16,10 @@ interface Props {
   prazo: Prazo | null;
   /** valores iniciais ao criar — usado pelo "+ Criar prazo" da tela de processo */
   prefill?: Partial<Prazo>;
-  advogados: Advogado[];
   aoFechar: () => void;
 }
 
-export function PrazoForm({ eu, prazo, prefill, advogados, aoFechar }: Props) {
+export function PrazoForm({ eu, prazo, prefill, aoFechar }: Props) {
   const salvar = useSalvarPrazo();
   const editando = prazo !== null;
   const base = prazo ?? prefill;
@@ -98,28 +97,14 @@ export function PrazoForm({ eu, prazo, prefill, advogados, aoFechar }: Props) {
             />
           </label>
 
-          <div className="form-row">
-            <label>
-              Responsável
-              <select
-                value={form.advogadoId ?? ""}
-                onChange={(e) => campo("advogadoId", e.target.value)}
-                required
-              >
-                {advogados.map((a) => (
-                  <option key={a.id} value={a.id}>{a.nome}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Tipo
-              <select value={form.tipo} onChange={(e) => campo("tipo", e.target.value as TipoPrazo)}>
-                {TIPOS.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-            </label>
-          </div>
+          <label>
+            Tipo
+            <select value={form.tipo} onChange={(e) => campo("tipo", e.target.value as TipoPrazo)}>
+              {TIPOS.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </label>
 
           <label>
             Data de vencimento

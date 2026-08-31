@@ -2,13 +2,10 @@ import { usePrazos } from "@/lib/queries/prazos";
 import { useTarefas } from "@/lib/queries/tarefas";
 import { formatar, urgencia } from "@/lib/datas";
 import { moeda } from "@/lib/formato";
-import { podeEditar, podeEscrever } from "@/lib/permissoes";
-import type { Advogado, Processo } from "@/types/dominio";
+import type { Processo } from "@/types/dominio";
 
 interface Props {
-  eu: Advogado;
   processo: Processo;
-  responsavel: Advogado | undefined;
   aoFechar: () => void;
   aoEditar: () => void;
   aoExcluir: () => void;
@@ -17,7 +14,7 @@ interface Props {
 }
 
 export function ProcessoDetalhe({
-  eu, processo: p, responsavel, aoFechar, aoEditar, aoExcluir, aoCriarPrazo, aoCriarTarefa
+  processo: p, aoFechar, aoEditar, aoExcluir, aoCriarPrazo, aoCriarTarefa
 }: Props) {
   // Já estão em cache — as duas telas carregam essas listas de qualquer forma.
   const { data: prazos } = usePrazos();
@@ -25,7 +22,6 @@ export function ProcessoDetalhe({
 
   const prazosDoProc = (prazos ?? []).filter((x) => x.numeroProcesso === p.numero);
   const tarefasDoProc = (tarefas ?? []).filter((x) => x.processoNumero === p.numero);
-  const meu = podeEditar(eu, p);
 
   return (
     <div className="modal-backdrop show" onClick={(e) => e.target === e.currentTarget && aoFechar()}>
@@ -53,7 +49,6 @@ export function ProcessoDetalhe({
           <div><small>Fase atual</small><strong>{p.fase ?? "—"}</strong></div>
           <div><small>Valor da causa</small><strong>{moeda(p.valorCausa)}</strong></div>
           <div><small>Distribuição</small><strong>{formatar(p.distribuicao)}</strong></div>
-          <div><small>Advogado responsável</small><strong>{responsavel?.nome ?? "—"}</strong></div>
         </div>
 
         {p.ultimaMov && (
@@ -99,22 +94,11 @@ export function ProcessoDetalhe({
         )}
 
         <div className="modal-actions">
-          {meu && <button className="btn-secondary" onClick={aoEditar}>Editar</button>}
-          {meu && <button className="btn-secondary" onClick={aoExcluir}>Excluir</button>}
-          {podeEscrever(eu) && (
-            <>
-              <button className="btn-secondary" onClick={aoCriarTarefa}>+ Criar tarefa</button>
-              <button className="btn-secondary" onClick={aoCriarPrazo}>+ Criar prazo</button>
-            </>
-          )}
+          <button className="btn-secondary" onClick={aoEditar}>Editar</button>
+          <button className="btn-secondary" onClick={aoExcluir}>Excluir</button>
+          <button className="btn-secondary" onClick={aoCriarTarefa}>+ Criar tarefa</button>
+          <button className="btn-secondary" onClick={aoCriarPrazo}>+ Criar prazo</button>
         </div>
-
-        {!meu && (
-          <p className="muted" style={{ marginTop: 12 }}>
-            Este processo é de {responsavel?.nome ?? "outro advogado"}. Você pode
-            consultá-lo e criar prazos e tarefas ligados a ele, mas não alterá-lo.
-          </p>
-        )}
       </div>
     </div>
   );

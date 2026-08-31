@@ -3,25 +3,26 @@ import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "reac
 import { useSair } from "@/lib/queries/sessao";
 import { usePrazos } from "@/lib/queries/prazos";
 import { diasAte } from "@/lib/datas";
-import { rotuloPapel } from "@/lib/permissoes";
+import { useTema } from "@/lib/tema";
 import type { Advogado } from "@/types/dominio";
 
 // Prazos primeiro entre as telas de trabalho: é a razão de o sistema existir.
 // "Busca de Processos" desceu — ela hoje só explica por que a funcionalidade
-// ainda não existe, e ocupava a segunda posição.
+// ainda não existe, e ocupava a segunda posição. "Equipe" saiu de vez: sem
+// escritório compartilhado, não existe mais colega nenhum para ver ali.
 const MENU = [
-  { para: "/painel", ico: "◇", texto: "Painel", titulo: "Visão geral do escritório" },
+  { para: "/painel", ico: "◇", texto: "Painel", titulo: "Sua visão geral" },
   { para: "/prazos", ico: "◷", texto: "Prazos", titulo: "Nunca mais perca uma data" },
-  { para: "/tarefas", ico: "▦", texto: "Quadro de Tarefas", titulo: "Organize o que cada advogado precisa fazer" },
-  { para: "/processos", ico: "▤", texto: "Processos", titulo: "Consulte e acompanhe os processos da empresa" },
-  { para: "/equipe", ico: "☰", texto: "Equipe", titulo: "Advogados cadastrados na empresa" },
-  { para: "/relatorios", ico: "▩", texto: "Relatórios", titulo: "Indicadores do departamento jurídico" },
+  { para: "/tarefas", ico: "▦", texto: "Quadro de Tarefas", titulo: "Organize o que você precisa fazer" },
+  { para: "/processos", ico: "▤", texto: "Processos", titulo: "Consulte e acompanhe os seus processos" },
+  { para: "/relatorios", ico: "▩", texto: "Relatórios", titulo: "Seus indicadores" },
   { para: "/busca", ico: "⌕", texto: "Busca de Processos", titulo: "Monitoramento automático nos tribunais" },
-  { para: "/config", ico: "⚙", texto: "Configurações", titulo: "Empresa e seu acesso" }
+  { para: "/config", ico: "⚙", texto: "Configurações", titulo: "Seu perfil e sua conta" }
 ];
 
 export function Shell({ eu }: { eu: Advogado }) {
   const sair = useSair();
+  const { tema, alternar: alternarTema } = useTema();
   const navegar = useNavigate();
   const { pathname } = useLocation();
   const [params] = useSearchParams();
@@ -37,7 +38,7 @@ export function Shell({ eu }: { eu: Advogado }) {
 
   const atual =
     pathname === "/resultados"
-      ? { texto: "Busca", titulo: "Resultados no escritório inteiro" }
+      ? { texto: "Busca", titulo: "Resultados nos seus dados" }
       : MENU.find((m) => m.para === pathname) ?? MENU[0];
 
   // Só os SEUS prazos: o selo fica ao lado do seu nome e do seu menu, então
@@ -60,8 +61,9 @@ export function Shell({ eu }: { eu: Advogado }) {
       <aside className="sidebar">
         <div className="logo">
           <span className="seal">§</span>
-          <div>
+          <div className="logo-text">
             <div className="brand-name">Juris</div>
+            <span className="brand-rule" aria-hidden="true" />
             <div className="brand-sub">Departamento Jurídico</div>
           </div>
         </div>
@@ -92,6 +94,24 @@ export function Shell({ eu }: { eu: Advogado }) {
         </nav>
 
         <div className="sidebar-footer">
+          <div className="user">
+            <span className="avatar" style={{ background: eu.cor }}>
+              {eu.iniciais}
+            </span>
+            <div className="user-info">
+              <strong>{eu.nome}</strong>
+              <small>{eu.oab ? `OAB ${eu.oab}` : eu.cargo ?? eu.email}</small>
+            </div>
+            <button
+              className="logout-btn"
+              title="Sair"
+              onClick={() => sair.mutate()}
+              disabled={sair.isPending}
+            >
+              ⏻
+            </button>
+          </div>
+
           <div className="mini-stat">
             <span>{naSemana}</span>
             <small>meus prazos nos próx. 7 dias</small>
@@ -113,34 +133,38 @@ export function Shell({ eu }: { eu: Advogado }) {
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
                 placeholder="Buscar processo, prazo ou tarefa..."
-                aria-label="Buscar no escritório inteiro"
+                aria-label="Buscar nos seus dados"
               />
             </form>
 
-            <div className="user">
-              <span className="avatar" style={{ background: eu.cor }}>
-                {eu.iniciais}
-              </span>
-              <div>
-                <strong>{eu.nome}</strong>
-                <small>
-                  {eu.oab ? `OAB ${eu.oab} · ` : ""}
-                  {rotuloPapel(eu.papel)}
-                </small>
-              </div>
-              <button
-                className="logout-btn"
-                title="Sair"
-                onClick={() => sair.mutate()}
-                disabled={sair.isPending}
-              >
-                ⏻
-              </button>
-            </div>
+            <button
+              className="theme-btn"
+              type="button"
+              title={tema === "claro" ? "Mudar para tema escuro" : "Mudar para tema claro"}
+              onClick={alternarTema}
+            >
+              {tema === "claro" ? "☾" : "☀"}
+            </button>
+
+            {/* A Dra. Camila e o botão de sair moraram aqui e foram para a
+                sidebar. Essa cópia só existe para telas estreitas, onde a
+                sidebar-footer some — sem ela, ninguém conseguiria sair pelo
+                celular. */}
+            <button
+              className="logout-btn logout-btn-mobile"
+              title="Sair"
+              onClick={() => sair.mutate()}
+              disabled={sair.isPending}
+            >
+              ⏻
+            </button>
           </div>
         </header>
 
-        <section>
+        {/* key={pathname} força o React a remontar a seção a cada rota nova
+            — é isso que faz a animação de entrada (ver legado.css) tocar de
+            novo a cada navegação, em vez de só na primeira vez. */}
+        <section key={pathname}>
           <Outlet />
         </section>
       </main>

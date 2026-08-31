@@ -1,6 +1,5 @@
 import { useProcessos } from "@/lib/queries/processos";
 import { usePrazos } from "@/lib/queries/prazos";
-import { useAdvogados } from "@/lib/queries/advogados";
 import { diasAte } from "@/lib/datas";
 import { moeda } from "@/lib/formato";
 import type { Processo } from "@/types/dominio";
@@ -8,7 +7,6 @@ import type { Processo } from "@/types/dominio";
 export function RelatoriosPage() {
   const { data: processos, isPending } = useProcessos();
   const { data: prazos } = usePrazos();
-  const { data: advogados } = useAdvogados();
 
   if (isPending) return <div className="empty-state">Carregando indicadores…</div>;
   if (!processos?.length) {
@@ -28,11 +26,6 @@ export function RelatoriosPage() {
   const porStatus = contar((p) => p.status);
   const valorTotal = processos.reduce((s, p) => s + p.valorCausa, 0);
 
-  const porAdvogado = (advogados ?? [])
-    .map((a) => ({ ...a, total: processos.filter((p) => p.advogadoId === a.id).length }))
-    .sort((a, b) => b.total - a.total);
-  const maxAdv = Math.max(1, ...porAdvogado.map((x) => x.total));
-
   const vencidos = (prazos ?? []).filter((p) => diasAte(p.vencimento) < 0).length;
 
   return (
@@ -50,22 +43,6 @@ export function RelatoriosPage() {
       <div className="grid grid-2">
         <Barras titulo="Processos por área do direito" dados={porTipo} />
         <Barras titulo="Processos por situação" dados={porStatus} />
-      </div>
-
-      <div className="box">
-        <div className="box-head"><h2>Processos por advogado</h2></div>
-        {porAdvogado.map((a) => (
-          <div className="lawyer" key={a.id}>
-            <span className="avatar sm" style={{ background: a.cor }}>{a.iniciais}</span>
-            <div className="lawyer-info">
-              <strong>{a.nome}</strong>
-              <div className="bar">
-                <div style={{ width: `${(a.total / maxAdv) * 100}%`, background: a.cor }} />
-              </div>
-            </div>
-            <span className="lawyer-count">{a.total}</span>
-          </div>
-        ))}
       </div>
     </>
   );

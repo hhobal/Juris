@@ -1,109 +1,170 @@
 import { useState, type FormEvent } from "react";
-import { useEntrar } from "@/lib/queries/sessao";
+import { useCriarConta, useEntrar } from "@/lib/queries/sessao";
+
+type Modo = "entrar" | "criar";
 
 export function Login() {
+  const [modo, setModo] = useState<Modo>("entrar");
+  const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [confirmacaoPendente, setConfirmacaoPendente] = useState(false);
+
   const entrar = useEntrar();
+  const criarConta = useCriarConta();
+
+  function trocarModo(novo: Modo) {
+    setModo(novo);
+    setConfirmacaoPendente(false);
+    entrar.reset();
+    criarConta.reset();
+  }
 
   function aoEnviar(e: FormEvent) {
     e.preventDefault();
-    entrar.mutate({ email, senha });
+    if (modo === "entrar") {
+      entrar.mutate({ email, senha });
+      return;
+    }
+    criarConta.mutate(
+      { nome, email, senha },
+      {
+        onSuccess: (resultado) => {
+          if (resultado.confirmacaoPendente) setConfirmacaoPendente(true);
+        }
+      }
+    );
   }
+
+  const enviando = entrar.isPending || criarConta.isPending;
+  const erro = entrar.error?.message ?? criarConta.error?.message ?? "";
 
   return (
     <div className="login-screen">
+      <video
+        className="login-video"
+        src="/video-juris.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        aria-hidden="true"
+      />
+      <div className="login-scrim" aria-hidden="true" />
+
       <div className="login-panel">
         <div className="login-brand">
           <span className="seal">§</span>
-          <div>
-            <div className="brand-name">Juris</div>
-            <div className="brand-sub">Gestão de processos &amp; prazos</div>
-          </div>
+          <div className="brand-name">Juris</div>
+          <span className="brand-rule" aria-hidden="true" />
+          <div className="brand-sub">Gestão de processos &amp; prazos</div>
         </div>
 
-        <h1>Acessar o sistema</h1>
-        <p className="login-hint">Entre com o e-mail corporativo cadastrado pelo escritório.</p>
+        {confirmacaoPendente ? (
+          <>
+            <h1>Confirme seu e-mail</h1>
+            <p className="login-hint">
+              Mandamos um link de confirmação para <strong>{email}</strong>. Clique nele para
+              ativar a conta e depois volte aqui para entrar.
+            </p>
+            <button className="btn-primary btn-block" type="button" onClick={() => trocarModo("entrar")}>
+              Voltar para o login
+            </button>
+          </>
+        ) : (
+          <>
+            <h1>{modo === "entrar" ? "Acessar o sistema" : "Criar sua conta"}</h1>
+            <p className="login-hint">
+              {modo === "entrar"
+                ? "Entre com o e-mail e a senha da sua conta."
+                : "O Juris é individual: seus processos, prazos e tarefas ficam só com você."}
+            </p>
 
-        <form className="form-login" onSubmit={aoEnviar}>
-          <label>
-            E-mail
-            <div className="input-wrap">
-              <span className="field-ico">✉</span>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="voce@empresa.com.br"
-                autoComplete="username"
-                required
-              />
-            </div>
-          </label>
+            <form className="form-login" onSubmit={aoEnviar}>
+              {modo === "criar" && (
+                <label>
+                  Nome completo
+                  <div className="input-wrap">
+                    <span className="field-ico">✎</span>
+                    <input
+                      type="text"
+                      value={nome}
+                      onChange={(e) => setNome(e.target.value)}
+                      placeholder="Ex: Dra. Camila Rezende"
+                      autoComplete="name"
+                      required
+                    />
+                  </div>
+                </label>
+              )}
 
-          <label>
-            Senha
-            <div className="input-wrap">
-              <span className="field-ico">🔒</span>
-              <input
-                type="password"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                placeholder="••••••••"
-                autoComplete="current-password"
-                required
-              />
-            </div>
-          </label>
+              <label>
+                E-mail
+                <div className="input-wrap">
+                  <span className="field-ico">✉</span>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="voce@email.com.br"
+                    autoComplete="username"
+                    required
+                  />
+                </div>
+              </label>
 
-          <div className="login-error">{entrar.error?.message ?? ""}</div>
+              <label>
+                Senha
+                <div className="input-wrap">
+                  <span className="field-ico">🔒</span>
+                  <input
+                    type="password"
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
+                    placeholder="••••••••"
+                    autoComplete={modo === "entrar" ? "current-password" : "new-password"}
+                    minLength={6}
+                    required
+                  />
+                </div>
+              </label>
 
-          <button type="submit" className="btn-primary btn-block" disabled={entrar.isPending}>
-            {entrar.isPending ? "Entrando…" : "Entrar"}
-          </button>
-        </form>
-      </div>
+              <div className="login-error">{erro}</div>
 
-      <div className="login-side">
-        <span className="login-eyebrow">Departamento Jurídico</span>
-        <div className="login-illustration" aria-hidden="true">
-        <svg viewBox="0 0 300 320" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-        <radialGradient id="scaleGlow" cx="50%" cy="45%" r="55%">
-        <stop offset="0%" stopColor="#C9A24B" stopOpacity=".35"/>
-        <stop offset="100%" stopColor="#C9A24B" stopOpacity="0"/>
-        </radialGradient>
-        </defs>
-        
-        <circle className="glow-pulse" cx="150" cy="150" r="145" fill="url(#scaleGlow)"/>
-        
-        {/* pedestal */}
-        <path d="M120 272 L180 272 L192 292 L108 292 Z" fill="none" stroke="#C9A24B" strokeWidth="1.6"/>
-        <line x1="150" y1="250" x2="150" y2="272" stroke="#C9A24B" strokeWidth="1.6"/>
-        {/* pole */}
-        <line x1="150" y1="70" x2="150" y2="250" stroke="#C9A24B" strokeWidth="1.6"/>
-        <circle cx="150" cy="64" r="6" fill="none" stroke="#C9A24B" strokeWidth="1.6"/>
-        
-        {/* beam + pans (sways gently) */}
-        <g className="scale-beam">
-        <line x1="68" y1="96" x2="232" y2="96" stroke="#C9A24B" strokeWidth="1.6"/>
-        <circle cx="150" cy="96" r="4" fill="#C9A24B"/>
-        
-        <g className="pan-left">
-        <line x1="68" y1="96" x2="52" y2="158" stroke="#C9A24B" strokeWidth="1.2"/>
-        <line x1="68" y1="96" x2="84" y2="158" stroke="#C9A24B" strokeWidth="1.2"/>
-        <path d="M44 158 Q68 186 92 158" fill="rgba(201,162,75,.14)" stroke="#C9A24B" strokeWidth="1.6"/>
-        </g>
-        
-        <g className="pan-right">
-        <line x1="232" y1="96" x2="216" y2="158" stroke="#C9A24B" strokeWidth="1.2"/>
-        <line x1="232" y1="96" x2="248" y2="158" stroke="#C9A24B" strokeWidth="1.2"/>
-        <path d="M208 158 Q232 186 256 158" fill="rgba(201,162,75,.14)" stroke="#C9A24B" strokeWidth="1.6"/>
-        </g>
-        </g>
-        </svg>
-        </div>
-        <blockquote>"O prazo não perdoa. O sistema, sim, pode lembrar por você."</blockquote>
+              <button type="submit" className="btn-primary btn-block" disabled={enviando}>
+                {enviando
+                  ? modo === "entrar"
+                    ? "Entrando…"
+                    : "Criando conta…"
+                  : modo === "entrar"
+                    ? "Entrar"
+                    : "Criar conta"}
+              </button>
+            </form>
+
+            <p className="login-switch">
+              {modo === "entrar" ? (
+                <>
+                  Ainda não tem conta?{" "}
+                  <button type="button" onClick={() => trocarModo("criar")}>
+                    Criar uma agora
+                  </button>
+                </>
+              ) : (
+                <>
+                  Já tem conta?{" "}
+                  <button type="button" onClick={() => trocarModo("entrar")}>
+                    Entrar
+                  </button>
+                </>
+              )}
+            </p>
+          </>
+        )}
+
+        <blockquote className="login-quote">
+          "O prazo não perdoa. O sistema, sim, pode lembrar por você."
+        </blockquote>
       </div>
     </div>
   );

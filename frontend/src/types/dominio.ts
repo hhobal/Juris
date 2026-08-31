@@ -6,14 +6,6 @@
  * tradução entre um e outro mora em `lib/queries/`.
  */
 
-export interface Empresa {
-  id: string;
-  razaoSocial: string;
-  cnpj: string;
-}
-
-export type Papel = "admin" | "advogado" | "consulta";
-
 export interface Advogado {
   id: string;
   nome: string;
@@ -22,9 +14,9 @@ export interface Advogado {
   cargo: string | null;
   cor: string;
   iniciais: string;
-  papel: Papel;
   ativo: boolean;
-  /** Perfil sem login criado no Auth ainda: cadastrado, mas sem conseguir entrar. */
+  /** Perfil sem login criado no Auth ainda — hoje só acontece se a conta foi
+   *  removida do Auth por fora do app; o cadastro em si nasce pelo signup. */
   temLogin: boolean;
 }
 

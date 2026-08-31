@@ -2,7 +2,6 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useProcessos } from "@/lib/queries/processos";
 import { usePrazos } from "@/lib/queries/prazos";
 import { useTarefas } from "@/lib/queries/tarefas";
-import { useAdvogados } from "@/lib/queries/advogados";
 import { formatar, urgencia } from "@/lib/datas";
 import { normalizar } from "@/lib/formato";
 
@@ -21,9 +20,7 @@ export function ResultadosPage() {
   const { data: processos } = useProcessos();
   const { data: prazos } = usePrazos();
   const { data: tarefas } = useTarefas();
-  const { data: advogados } = useAdvogados();
 
-  const porId = new Map((advogados ?? []).map((a) => [a.id, a]));
   const casa = (...campos: (string | null)[]) =>
     q.length > 0 && campos.some((c) => normalizar(c).includes(q));
 
@@ -67,20 +64,16 @@ export function ResultadosPage() {
           </div>
           <table>
             <thead>
-              <tr><th>Nº do processo</th><th>Partes</th><th>Tipo</th><th>Responsável</th></tr>
+              <tr><th>Nº do processo</th><th>Partes</th><th>Tipo</th></tr>
             </thead>
             <tbody>
-              {achouProcessos.map((p) => {
-                const adv = p.advogadoId ? porId.get(p.advogadoId) : undefined;
-                return (
-                  <tr key={p.id}>
-                    <td className="mono">{p.numero}</td>
-                    <td>{p.parte}</td>
-                    <td>{p.tipo ?? "—"}</td>
-                    <td>{adv?.nome ?? "—"}</td>
-                  </tr>
-                );
-              })}
+              {achouProcessos.map((p) => (
+                <tr key={p.id}>
+                  <td className="mono">{p.numero}</td>
+                  <td>{p.parte}</td>
+                  <td>{p.tipo ?? "—"}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

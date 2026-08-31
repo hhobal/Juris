@@ -4,12 +4,13 @@ import { linhaParaAdvogado } from "./advogados";
 import type { Advogado } from "@/types/dominio";
 
 /**
- * Senha certa não é o mesmo que ter acesso.
- *
- * Quem autoriza a entrada é o cadastro em `advogados`, feito por um
- * administrador — o login sozinho não autoriza nada. Por isso todo caminho
- * aqui confere o perfil depois de autenticar, e encerra a sessão se não
- * houver perfil ou se ele estiver desativado.
+ * Login e perfil nascem juntos: quem se cadastra ganha uma linha em
+ * `advogados` na hora, criada pelo trigger `handle_new_user` no banco — não
+ * existe mais admin convidando ninguém. Mesmo assim todo caminho aqui
+ * confere o perfil depois de autenticar, e encerra a sessão se ele não
+ * existir ou estiver desativado: casos raros (perfil apagado por fora do
+ * app, conta desativada por quem administra o sistema), mas que a RLS já
+ * bloquearia de qualquer forma — melhor a tela explicar o que houve.
  */
 
 class SemAcesso extends Error {}
@@ -74,17 +75,72 @@ export function useEntrar() {
       if (!linha) {
         await supabase.auth.signOut();
         throw new SemAcesso(
-          "Este e-mail não tem acesso ao sistema. Peça a um administrador para cadastrá-lo em Advogados."
+          "Não encontrei um perfil para esta conta. Tente criar a conta novamente."
         );
       }
       if (linha.ativo === false) {
         await supabase.auth.signOut();
-        throw new SemAcesso("Este acesso foi desativado. Procure um administrador.");
+        throw new SemAcesso("Este acesso foi desativado.");
       }
 
       return linhaParaAdvogado(linha);
     },
     onSuccess: (advogado) => qc.setQueryData(chaveSessao, advogado)
+  });
+}
+
+/**
+ * Cria a conta e o perfil de uma vez. O perfil em si nasce no banco (trigger
+ * `handle_new_user`, ver a migration "advogado_autonomo") assim que o Auth
+ * confirma o cadastro — aqui só entra na sessão se já vier com uma ativa.
+ *
+ * Sem confirmação de e-mail ligada no projeto, `signUp` já devolve uma
+ * sessão pronta. Com confirmação ligada, `data.session` vem nulo e a pessoa
+ * precisa clicar no link do e-mail antes de conseguir entrar.
+ */
+export function useCriarConta() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ nome, email, senha }: { nome: string; email: string; senha: string }) => {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password: senha,
+        options: { data: { nome } }
+      });
+
+      if (error) {
+        const msg = error.message.toLowerCase();
+        if (msg.includes("already registered") || msg.includes("already been registered")) {
+          throw new Error("Já existe uma conta com este e-mail. Tente entrar em vez de criar uma nova.");
+        }
+        if (msg.includes("password")) {
+          throw new Error("A senha precisa ter pelo menos 6 caracteres.");
+        }
+        throw new Error(error.message);
+      }
+
+      if (!data.session) {
+        return { confirmacaoPendente: true as const };
+      }
+
+      const { data: linha } = await supabase
+        .from("advogados")
+        .select("*")
+        .eq("auth_user_id", data.user!.id)
+        .maybeSingle();
+
+      if (!linha) {
+        throw new Error(
+          "A conta foi criada, mas não consegui carregar o perfil ainda. Tente entrar em alguns instantes."
+        );
+      }
+
+      return { confirmacaoPendente: false as const, advogado: linhaParaAdvogado(linha) };
+    },
+    onSuccess: (resultado) => {
+      if (!resultado.confirmacaoPendente) qc.setQueryData(chaveSessao, resultado.advogado);
+    }
   });
 }
 

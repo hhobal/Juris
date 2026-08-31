@@ -22,11 +22,10 @@ interface Props {
   tarefa: Tarefa | null;
   /** valores iniciais ao criar — usado pelo "+ Criar tarefa" da tela de processo */
   prefill?: Partial<Tarefa>;
-  advogados: Advogado[];
   aoFechar: () => void;
 }
 
-export function TarefaForm({ eu, tarefa, prefill, advogados, aoFechar }: Props) {
+export function TarefaForm({ eu, tarefa, prefill, aoFechar }: Props) {
   const salvar = useSalvarTarefa();
   const editando = tarefa !== null;
   const base = tarefa ?? prefill;
@@ -90,18 +89,6 @@ export function TarefaForm({ eu, tarefa, prefill, advogados, aoFechar }: Props) 
 
           <div className="form-row">
             <label>
-              Responsável
-              <select
-                value={form.advogadoId ?? ""}
-                onChange={(e) => campo("advogadoId", e.target.value)}
-                required
-              >
-                {advogados.map((a) => (
-                  <option key={a.id} value={a.id}>{a.nome}</option>
-                ))}
-              </select>
-            </label>
-            <label>
               Prioridade
               <select
                 value={form.prioridade}
@@ -112,9 +99,6 @@ export function TarefaForm({ eu, tarefa, prefill, advogados, aoFechar }: Props) 
                 ))}
               </select>
             </label>
-          </div>
-
-          <div className="form-row">
             <label>
               Situação
               <select
@@ -126,25 +110,17 @@ export function TarefaForm({ eu, tarefa, prefill, advogados, aoFechar }: Props) 
                 ))}
               </select>
             </label>
-            <label>
-              Prazo para concluir
-              <input
-                type="date"
-                value={form.prazo ?? ""}
-                onChange={(e) => campo("prazo", e.target.value)}
-                required
-              />
-            </label>
           </div>
 
-          {/* Atribuir a um colega é permitido; mexer no que já é dele, não.
-              Aviso aqui evita a pessoa preencher tudo e tomar erro no fim. */}
-          {editando && form.advogadoId !== tarefa.advogadoId && (
-            <div className="login-error">
-              Ao trocar o responsável, esta tarefa sai do seu quadro e você não
-              poderá mais editá-la.
-            </div>
-          )}
+          <label>
+            Prazo para concluir
+            <input
+              type="date"
+              value={form.prazo ?? ""}
+              onChange={(e) => campo("prazo", e.target.value)}
+              required
+            />
+          </label>
 
           {salvar.error && <div className="login-error">{salvar.error.message}</div>}
 

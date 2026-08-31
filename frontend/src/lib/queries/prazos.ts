@@ -48,7 +48,7 @@ export function usePrazos() {
         .from("prazos")
         .select("*")
         .order("vencimento", { ascending: true });
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(traduzirErro(error.message));
       return data.map(linhaParaPrazo);
     }
   });

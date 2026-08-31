@@ -49,7 +49,7 @@ arriscada antes de mandar para produção. Precisa de Docker aberto.
 
 ```bash
 npx supabase start      # sobe Postgres, Auth, Storage e Studio
-npx supabase db reset   # recria o banco local: migration + seed.sql
+npx supabase db reset   # recria o banco local: migrations + seed.sql
 npx supabase stop       # derruba tudo
 ```
 
@@ -60,62 +60,62 @@ npx supabase stop       # derruba tudo
 | Postgres | `postgresql://postgres:postgres@127.0.0.1:54322/postgres` |
 | E-mails de teste | http://127.0.0.1:54324 |
 
-O `seed.sql` (os três advogados de exemplo) roda **só** no `db reset` local.
-Dado de exemplo nunca sobe para produção.
+`enable_signup` fica ligado tanto local quanto em produção — ver "Como alguém
+ganha acesso" abaixo. O `seed.sql` não semeia mais nenhum advogado: para ter
+uma conta de teste local, cadastre-se pela própria tela de login do app
+(`npm run dev` com `VITE_SUPABASE_URL` apontando pra `http://127.0.0.1:54321`).
 
-## Quem pode o quê
+Só um detalhe chato de `supabase gen types`: quando roda contra o banco local
+ele imprime `Connecting to db 5432` — só que em alguns terminais isso sai pelo
+stdout, não pelo stderr, e se você redirecionar com `2>&1` essa linha vaza pro
+arquivo de tipos e quebra a compilação (`error TS1434` na linha 1). Redirecione
+só o stdout (`> arquivo.ts`, sem o `2>&1`) e confira a primeira linha do
+arquivo gerado antes de seguir.
 
-| | admin | advogado | consulta |
-|---|---|---|---|
-| Ver processos, prazos, tarefas e equipe | sim | sim | sim |
-| Criar processo, prazo, tarefa | sim | sim | não |
-| Atribuir trabalho a um colega | sim | sim | não |
-| Editar e apagar o que é **seu** | sim | sim | não |
-| Editar e apagar o que é **de outro** | sim | não | não |
-| Cadastrar, promover e desativar pessoas | sim | não | não |
+## Isolamento: cada advogado é o dono do próprio Juris
 
-O papel fica em `advogados.papel`. Quem estiver com `ativo = false` não passa de
-nenhuma policy, mesmo com o login ainda válido no Auth.
-
-Isso vale no banco, não na interface. Esconder um botão no front é conveniência;
-a RLS é o que de fato barra — inclusive alguém chamando a API por fora do app.
-
-## Dar acesso a alguém
-
-São dois passos, e **os dois são necessários** — é isso que impede um estranho
-de entrar sozinho:
-
-1. **Cadastrar o perfil.** Uma linha em `advogados` com o e-mail da pessoa e o
-   papel. Pela tela de equipe do app (se você for admin) ou pelo Table Editor.
-   Esse cadastro é o convite.
-2. **Criar o login**, em `Authentication → Users → Add user → Create new user`,
-   com o **mesmo e-mail** e a opção **Auto Confirm User** marcada.
-
-O trigger `handle_new_user` liga um ao outro sozinho, em qualquer ordem.
-
-Login sem perfil correspondente **não dá acesso a nada**: a pessoa autentica,
-mas não enxerga uma linha sequer, e o app recusa a entrada. O cadastro público
-(`/auth/v1/signup`) está desligado no `config.toml` justamente porque a anon key
-é visível no front.
-
-Quem sai da empresa é **desativado**, não apagado: processos, prazos e tarefas
-continuam apontando para um registro válido e o histórico de autoria fica de pé.
-Não existe política de `delete` em `advogados` de propósito.
-
-### O primeiro admin
-
-Ovo e galinha: só um admin cadastra gente, e no começo não existe nenhum. No
-ambiente local o `seed.sql` já resolve. No projeto de verdade, promova alguém
-uma vez pelo SQL Editor:
+Não existe mais escritório, equipe nem papel (admin/advogado/consulta). O
+Juris é uma ferramenta por pessoa: cada advogado só enxerga — e só pode
+mexer em — os próprios processos, prazos e tarefas. A RLS de todas as
+tabelas de trabalho é a mesma regra, sempre:
 
 ```sql
-update advogados set papel = 'admin'
- where email = 'seu.email@empresa.com.br';
+using (advogado_id = advogado_atual())
 ```
 
-Isso funciona porque as travas de papel são inertes quando não há usuário
-autenticado na jogada (`auth.uid()` nulo) — ou seja, pelo SQL Editor, pelo
-service_role e pelas migrations. Elas existem para conter quem chega pelo app.
+Sem bypass de admin, sem "ver o que é do colega". O que aparece na tela de
+alguém é, por definição, só o que é dessa pessoa — não tem "isso é de outro
+advogado, você só pode consultar" como tinha antes. Isso vale no banco, não
+na interface: a RLS é o que de fato barra, inclusive alguém chamando a API
+por fora do app.
+
+Quem desativa a própria conta (`advogados.ativo = false`) perde acesso na
+hora, mesmo com o login ainda válido no Auth — `advogado_atual()` já exige
+`ativo`. Não existe política de `delete` em `advogados` de propósito: sair
+não apaga o histórico de autoria de processos/prazos/tarefas.
+
+## Como alguém ganha acesso
+
+Cadastro público, sem convite: a pessoa cria a própria conta pela tela de
+login do app (e-mail, senha, nome). O trigger `handle_new_user` cria a linha
+correspondente em `advogados` **na hora**, com o nome que ela informou —
+não tem mais "cadastrar o perfil primeiro, depois criar o login": os dois
+nascem juntos, na mesma ação.
+
+```sql
+insert into public.advogados (auth_user_id, nome, email)
+values (new.id, coalesce(new.raw_user_meta_data ->> 'nome', ...), lower(new.email));
+```
+
+Login sem perfil correspondente hoje só acontece se algo falhar no meio do
+caminho (trigger com erro, perfil apagado por fora do app) — não é mais o
+fluxo normal, é um caso de borda que a tela de login trata com uma mensagem
+de erro.
+
+Se um dia quiser voltar a exigir confirmação de e-mail antes do primeiro
+acesso (hoje `enable_confirmations = false`, ou seja, a conta já nasce
+utilizável), isso se liga em `[auth.email]` no `config.toml` local — em
+produção, no painel do Supabase em Authentication → Providers → Email.
 
 ## Regenerar os tipos
 
@@ -148,21 +148,29 @@ lista já é carregada ao abrir e recarregada quando a janela volta ao foco.
 
 ## Funções de apoio
 
-Disponíveis para novas policies, todas `security definer` (o que evita recursão
-quando usadas em policies da própria tabela `advogados`):
+```sql
+create or replace function public.advogado_atual() returns uuid
+    language sql stable security definer set search_path to 'public' as $$
+  select id from public.advogados where auth_user_id = auth.uid() and ativo;
+$$;
+```
 
-| função | devolve |
-|---|---|
-| `advogado_atual()` | id do perfil logado, ou `null` se não houver acesso |
-| `papel_atual()` | `admin`, `advogado`, `consulta` ou `null` |
-| `e_admin()` | booleano |
-| `pode_escrever()` | booleano — admin ou advogado, ativo |
+`security definer` evita recursão quando usada em policies da própria tabela
+`advogados`. É a única função de apoio que sobrou — `papel_atual()`,
+`e_admin()` e `pode_escrever()` foram embora junto com o papel (migration
+"advogado_autonomo").
 
-Exemplo, para uma tabela nova seguir a mesma regra das outras:
+Exemplo, para uma tabela nova seguir a mesma regra das outras — leitura e
+escrita sempre só do dono, sem exceção:
 
 ```sql
-create policy "todos leem documentos" on documentos for select
-  using (public.advogado_atual() is not null);
+create policy "le documento proprio" on documentos for select
+  using (advogado_id = public.advogado_atual());
+create policy "cria documento proprio" on documentos for insert
+  with check (advogado_id = public.advogado_atual());
 create policy "edita documento proprio" on documentos for update
-  using (public.e_admin() or advogado_id = public.advogado_atual());
+  using (advogado_id = public.advogado_atual())
+  with check (advogado_id = public.advogado_atual());
+create policy "apaga documento proprio" on documentos for delete
+  using (advogado_id = public.advogado_atual());
 ```

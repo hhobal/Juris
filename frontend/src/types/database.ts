@@ -47,12 +47,10 @@ export type Database = {
           cor: string | null
           created_at: string | null
           email: string
-          empresa_id: string | null
           id: string
           iniciais: string | null
           nome: string
           oab: string | null
-          papel: string
         }
         Insert: {
           ativo?: boolean
@@ -61,12 +59,10 @@ export type Database = {
           cor?: string | null
           created_at?: string | null
           email: string
-          empresa_id?: string | null
           id?: string
           iniciais?: string | null
           nome: string
           oab?: string | null
-          papel?: string
         }
         Update: {
           ativo?: boolean
@@ -75,41 +71,10 @@ export type Database = {
           cor?: string | null
           created_at?: string | null
           email?: string
-          empresa_id?: string | null
           id?: string
           iniciais?: string | null
           nome?: string
           oab?: string | null
-          papel?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "advogados_empresa_id_fkey"
-            columns: ["empresa_id"]
-            isOneToOne: false
-            referencedRelation: "empresas"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      empresas: {
-        Row: {
-          cnpj: string
-          created_at: string | null
-          id: string
-          razao_social: string
-        }
-        Insert: {
-          cnpj: string
-          created_at?: string | null
-          id?: string
-          razao_social: string
-        }
-        Update: {
-          cnpj?: string
-          created_at?: string | null
-          id?: string
-          razao_social?: string
         }
         Relationships: []
       }
@@ -332,9 +297,6 @@ export type Database = {
     }
     Functions: {
       advogado_atual: { Args: never; Returns: string }
-      e_admin: { Args: never; Returns: boolean }
-      papel_atual: { Args: never; Returns: string }
-      pode_escrever: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

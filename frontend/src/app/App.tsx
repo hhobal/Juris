@@ -7,7 +7,6 @@ import { BuscaPage } from "@/features/busca/BuscaPage";
 import { ProcessosPage } from "@/features/processos/ProcessosPage";
 import { TarefasPage } from "@/features/tarefas/TarefasPage";
 import { PrazosPage } from "@/features/prazos/PrazosPage";
-import { EquipePage } from "@/features/equipe/EquipePage";
 import { RelatoriosPage } from "@/features/relatorios/RelatoriosPage";
 import { ConfigPage } from "@/features/config/ConfigPage";
 import { ResultadosPage } from "@/features/buscaGeral/ResultadosPage";
@@ -37,7 +36,6 @@ export function App() {
         <Route path="/processos" element={<ProcessosPage eu={eu} />} />
         <Route path="/tarefas" element={<TarefasPage eu={eu} />} />
         <Route path="/prazos" element={<PrazosPage eu={eu} />} />
-        <Route path="/equipe" element={<EquipePage eu={eu} />} />
         <Route path="/relatorios" element={<RelatoriosPage />} />
         <Route path="/config" element={<ConfigPage eu={eu} />} />
         <Route path="/resultados" element={<ResultadosPage />} />

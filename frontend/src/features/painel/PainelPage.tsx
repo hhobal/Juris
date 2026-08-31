@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { usePrazos } from "@/lib/queries/prazos";
 import { useTarefas } from "@/lib/queries/tarefas";
 import { useProcessos } from "@/lib/queries/processos";
-import { useAdvogados, primeiroNome } from "@/lib/queries/advogados";
+import { primeiroNome } from "@/lib/queries/advogados";
 import { diasAte, formatar, urgencia } from "@/lib/datas";
 import type { Advogado, Prazo, Tarefa } from "@/types/dominio";
 
@@ -12,7 +12,6 @@ export function PainelPage({ eu }: { eu: Advogado }) {
   const { data: prazos, isPending: carregandoPrazos } = usePrazos();
   const { data: tarefas } = useTarefas();
   const { data: processos } = useProcessos();
-  const { data: advogados } = useAdvogados();
 
   if (carregandoPrazos) return <div className="empty-state">Carregando o painel…</div>;
 
@@ -24,21 +23,12 @@ export function PainelPage({ eu }: { eu: Advogado }) {
   const pendentes = (tarefas ?? []).filter((t) => t.coluna !== "concluido").length;
 
   // Ordenar por string "AAAA-MM-DD" já dá ordem cronológica — nem precisa de Date.
-  const meusPrazos = (prazos ?? [])
-    .filter((p) => p.advogadoId === eu.id)
-    .sort((a, b) => a.vencimento.localeCompare(b.vencimento))
-    .slice(0, 4);
+  const proximosPrazos = [...(prazos ?? [])].sort((a, b) => a.vencimento.localeCompare(b.vencimento)).slice(0, 4);
 
-  const minhasTarefas = (tarefas ?? [])
-    .filter((t) => t.advogadoId === eu.id && t.coluna !== "concluido")
+  const tarefasPendentes = (tarefas ?? [])
+    .filter((t) => t.coluna !== "concluido")
     .sort((a, b) => (a.prazo ?? "9999").localeCompare(b.prazo ?? "9999"))
     .slice(0, 4);
-
-  const carga = (advogados ?? []).map((a) => ({
-    ...a,
-    total: (tarefas ?? []).filter((t) => t.advogadoId === a.id && t.coluna !== "concluido").length
-  }));
-  const maxCarga = Math.max(1, ...carga.map((c) => c.total));
 
   const vencidos = (prazos ?? []).filter((p) => diasAte(p.vencimento) < 0).length;
 
@@ -51,7 +41,6 @@ export function PainelPage({ eu }: { eu: Advogado }) {
           <strong className={naSemana > 0 ? "danger" : ""}>{naSemana}</strong>
         </div>
         <div className="card"><span>Tarefas pendentes</span><strong>{pendentes}</strong></div>
-        <div className="card"><span>Advogados</span><strong>{(advogados ?? []).length}</strong></div>
       </div>
 
       {/* Prazo vencido é a pior coisa que pode acontecer neste sistema.
@@ -73,43 +62,25 @@ export function PainelPage({ eu }: { eu: Advogado }) {
       <div className="grid grid-2">
         <div className="box">
           <div className="box-head">
-            <h2>Meus próximos prazos</h2>
+            <h2>Próximos prazos</h2>
             <Link className="link-btn" to="/prazos">Ver todos →</Link>
           </div>
-          {meusPrazos.length ? meusPrazos.map(LinhaPrazo) : (
-            <div className="empty-state">Nenhum prazo cadastrado para você.</div>
+          {proximosPrazos.length ? proximosPrazos.map(LinhaPrazo) : (
+            <div className="empty-state">Nenhum prazo cadastrado ainda.</div>
           )}
         </div>
 
         <div className="box">
           <div className="box-head">
-            <h2>Minhas tarefas</h2>
+            <h2>Tarefas pendentes</h2>
             <Link className="link-btn" to="/tarefas">Ver quadro →</Link>
           </div>
-          {minhasTarefas.length ? minhasTarefas.map(LinhaTarefa) : (
+          {tarefasPendentes.length ? tarefasPendentes.map(LinhaTarefa) : (
             <div className="empty-state">
               Nenhuma tarefa pendente. Bom trabalho, {primeiroNome(eu.nome)}.
             </div>
           )}
         </div>
-      </div>
-
-      <div className="box">
-        <div className="box-head"><h2>Carga de trabalho da equipe</h2></div>
-        {carga.length === 0 ? (
-          <div className="empty-state">Nenhum advogado ativo cadastrado.</div>
-        ) : carga.map((c) => (
-          <div className="lawyer" key={c.id}>
-            <span className="avatar sm" style={{ background: c.cor }}>{c.iniciais}</span>
-            <div className="lawyer-info">
-              <strong>{c.nome}</strong>
-              <div className="bar">
-                <div style={{ width: `${(c.total / maxCarga) * 100}%`, background: c.cor }} />
-              </div>
-            </div>
-            <span className="lawyer-count">{c.total} tarefa{c.total === 1 ? "" : "s"}</span>
-          </div>
-        ))}
       </div>
     </>
   );

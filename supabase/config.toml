@@ -173,12 +173,11 @@ enable_refresh_token_rotation = true
 # Requires enable_refresh_token_rotation = true.
 refresh_token_reuse_interval = 10
 # Allow/disallow new user signups to your project.
-# DESLIGADO de propósito. A anon key fica visível no front, então com isto
-# ligado qualquer pessoa podia se cadastrar sozinha pelo endpoint /auth/v1/signup.
-# Contas só nascem pela mão de um admin (painel do Supabase -> Authentication).
-# Se um dia ligar isto de novo, o trigger handle_new_user ainda segura a porta:
-# ele só liga o login a um perfil de advogado já cadastrado.
-enable_signup = false
+# LIGADO de propósito. O Juris virou uma ferramenta por advogado, sem
+# escritório nem admin — cada pessoa cria a própria conta pelo app, e o
+# trigger handle_new_user cria o perfil dela na hora (ver migration
+# "advogado_autonomo"). A RLS é o que garante que cada uma só vê o que é seu.
+enable_signup = true
 # Allow/disallow anonymous sign-ins to your project.
 enable_anonymous_sign_ins = false
 # Allow/disallow testing manual linking of accounts
