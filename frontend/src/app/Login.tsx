@@ -90,7 +90,7 @@ export function Login() {
                       type="text"
                       value={nome}
                       onChange={(e) => setNome(e.target.value)}
-                      placeholder="Ex: Dra. Camila Rezende"
+                      placeholder="Escreva seu nome completo"
                       autoComplete="name"
                       required
                     />

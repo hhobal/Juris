@@ -45,40 +45,32 @@
   --font-body:'Inter', 'Segoe UI', Arial, sans-serif;
   --font-mono:'IBM Plex Mono', 'Courier New', monospace;
 
-  /* textura sutil de "papel pautado" usada em fundos grandes */
+  /* Usada só pelo scrim da tela de login (vídeo de fundo) — não muda com o
+     tema, porque o login não segue o tema claro/escuro do app. */
   --ledger-texture:
     repeating-linear-gradient(180deg, rgba(201,162,75,.025) 0px, rgba(201,162,75,.025) 1px, transparent 1px, transparent 42px);
-
-  /* Os dois radiais que dão variação de tom ao fundo (ver comentário no
-     "body" abaixo). Calibrados para o tema escuro; o tema claro redefine. */
-  --wash-1:rgba(255,255,255,.035);
-  --wash-2:rgba(0,0,0,.3);
 }
 
-/* TEMA CLARO — mesma estrutura de tokens, paleta invertida. Papel/pergaminho
-   em vez de branco puro (o branco puro cansa a vista numa tela cheia de
-   texto), dourado escurecido para virar tinta legível em vez de realce. */
+/* TEMA CLARO — mesma estrutura de tokens, paleta invertida. Cinza neutro bem
+   claro no fundo da página com cards brancos por cima (o padrão comum de
+   dashboard atual), não branco puro nem tom de papel — mantém contraste sem
+   cansar a vista nem parecer datado. */
 :root[data-theme="claro"]{
-  --bg:#F1EEE7;
-  --bg-alt:#E9E4D8;
-  --surface:#FAF8F3;
-  --surface-2:#EFEAE0;
-  --border:#DCD4C3;
-  --border-soft:#E7E1D2;
-  --text:#26241F;
-  --text-muted:#6D6858;
-  --text-faint:#9A9484;
+  --bg:#F4F4F6;
+  --bg-alt:#ECECEF;
+  --surface:#FFFFFF;
+  --surface-2:#F1F1F4;
+  --border:#E1E1E6;
+  --border-soft:#EBEBEF;
+  --text:#1A1A1E;
+  --text-muted:#68686F;
+  --text-faint:#9D9DA4;
 
   --gold-ink:#8A6416;
-  --gold-soft:rgba(201,162,75,.22);
-  --ledger-texture:
-    repeating-linear-gradient(180deg, rgba(138,100,22,.05) 0px, rgba(138,100,22,.05) 1px, transparent 1px, transparent 42px);
+  --gold-soft:rgba(201,162,75,.18);
 
-  --wash-1:rgba(255,255,255,.5);
-  --wash-2:rgba(0,0,0,.045);
-
-  --shadow-1:0 10px 30px rgba(30,25,15,.10);
-  --shadow-2:0 24px 60px rgba(30,25,15,.14);
+  --shadow-1:0 10px 30px rgba(20,20,25,.08);
+  --shadow-2:0 24px 60px rgba(20,20,25,.12);
 }
 
 *{
@@ -92,16 +84,8 @@
 
 [hidden]{ display:none !important; }
 
-/* A parede do vídeo não é uma cor chapada — tem variação de tom de um canto
-   ao outro. Esses dois radiais reproduzem isso no fundo do app: sutil o
-   bastante para não competir com o conteúdo, presente o bastante para o
-   fundo não parecer uma cor sólida de CSS. */
 body{
-  background:
-    var(--ledger-texture),
-    radial-gradient(circle at 15% -10%, var(--wash-1), transparent 45%),
-    radial-gradient(circle at 100% 110%, var(--wash-2), transparent 55%),
-    var(--bg);
+  background:var(--bg);
   color:var(--text);
   font-family:var(--font-body);
   -webkit-font-smoothing:antialiased;
