@@ -119,6 +119,15 @@ select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
    ========================================================== */
 
 .login-screen{
+  /* O login não segue o tema claro/escuro do app (o fundo aqui é sempre o
+     vídeo escuro) — sem isto, no tema claro o texto herdava --text quase
+     preto do :root[data-theme="claro"] e sumia em cima do vídeo. */
+  --bg:#111113;
+  --text:#ECECEC;
+  --text-muted:#9C9CA1;
+  --text-faint:#6B6B70;
+  --gold-ink:var(--gold);
+
   position:relative;
   min-height:100vh;
   display:flex;
@@ -168,7 +177,7 @@ select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
   text-shadow:0 2px 16px rgba(0,0,0,.7);
 }
 
-.login-brand .seal{ width:52px; height:52px; font-size:24px; }
+.login-brand .brand-mark{ height:52px; }
 
 .login-brand .brand-name{
   font-size:27px;
@@ -188,26 +197,32 @@ select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
   text-transform:uppercase;
 }
 
-.seal{
-  width:46px; height:46px;
-  border:1.5px solid var(--gold);
-  border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-family:var(--font-display);
-  font-size:22px;
-  color:var(--gold-ink);
+.brand-mark{
+  height:46px;
+  width:auto;
   flex-shrink:0;
-  position:relative;
-}
-.seal::before{
-  content:"";
-  position:absolute; inset:4px;
-  border:1px solid rgba(201,162,75,.35);
-  border-radius:50%;
+  display:block;
 }
 
 .brand-name{ font-family:var(--font-display); font-weight:600; font-size:21px; letter-spacing:.3px; }
 .brand-sub{ font-size:11.5px; color:var(--text-muted); letter-spacing:.3px; }
+
+/* "JURIS" em destaque: dourado com um brilho que desliza pela palavra. */
+.login-brand .brand-name{
+  background:linear-gradient(100deg, var(--gold) 0%, var(--gold-bright) 25%, #FCEFC7 50%, var(--gold-bright) 75%, var(--gold) 100%);
+  background-size:220% auto;
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  animation:brilho-juris 6s linear infinite;
+}
+@keyframes brilho-juris{
+  0%{ background-position:200% center; }
+  100%{ background-position:-200% center; }
+}
+@media (prefers-reduced-motion: reduce){
+  .login-brand .brand-name{ animation:none; }
+}
 
 .login-panel h1{
   font-family:var(--font-display);
@@ -215,6 +230,7 @@ select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
   font-size:clamp(26px, 3vw, 32px);
   margin-bottom:10px;
   letter-spacing:-.2px;
+  color:var(--text-muted);
   text-shadow:0 2px 16px rgba(0,0,0,.7);
 }
 
@@ -261,6 +277,19 @@ select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
   box-shadow:0 0 0 3px rgba(201,162,75,.18);
 }
 .form-login input::placeholder{ color:var(--text-faint); }
+
+/* O navegador força um fundo claro em campo preenchido por autofill,
+   ignorando o "background" acima — este truque do box-shadow interno
+   substitui esse fundo sem disparar a troca abrupta de cor do Chrome. */
+.form-login input:-webkit-autofill,
+.form-login input:-webkit-autofill:hover,
+.form-login input:-webkit-autofill:focus{
+  -webkit-text-fill-color:var(--text);
+  caret-color:var(--text);
+  -webkit-box-shadow:0 0 0 1000px rgba(17,17,19,.75) inset;
+  box-shadow:0 0 0 1000px rgba(17,17,19,.75) inset;
+  transition:background-color 9999s ease-in-out 0s;
+}
 
 .login-error{
   display:flex; align-items:center; gap:8px;
@@ -340,7 +369,7 @@ select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
    largura da sidebar. Sem a animação de balanço: parado, como no login. */
 .logo{ display:flex; align-items:center; gap:14px; margin-bottom:40px; padding:0 6px; }
 .logo-text{ display:flex; flex-direction:column; gap:5px; }
-.logo .seal{ width:38px; height:38px; font-size:19px; }
+.logo .brand-mark{ height:38px; }
 .logo .brand-name{ font-size:16px; letter-spacing:2px; text-transform:uppercase; }
 .logo .brand-rule{ width:22px; height:1px; background:linear-gradient(90deg, var(--gold), transparent); }
 .logo .brand-sub{ font-size:9.5px; letter-spacing:.9px; text-transform:uppercase; }

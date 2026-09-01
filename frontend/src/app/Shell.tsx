@@ -61,7 +61,11 @@ export function Shell({ eu }: { eu: Advogado }) {
     <div className="container">
       <aside className="sidebar">
         <div className="logo">
-          <span className="seal">§</span>
+          <img
+            className="brand-mark"
+            src={tema === "claro" ? "/juris-mark-dark.svg" : "/juris-mark-gold.svg"}
+            alt="Juris"
+          />
           <div className="logo-text">
             <div className="brand-name">Juris</div>
             <span className="brand-rule" aria-hidden="true" />

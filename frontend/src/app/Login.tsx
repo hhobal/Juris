@@ -54,7 +54,7 @@ export function Login() {
 
       <div className="login-panel">
         <div className="login-brand">
-          <span className="seal">§</span>
+          <img className="brand-mark" src="/juris-mark-gold.svg" alt="Juris" />
           <div className="brand-name">Juris</div>
           <span className="brand-rule" aria-hidden="true" />
           <div className="brand-sub">Gestão de processos &amp; prazos</div>
