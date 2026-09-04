@@ -99,24 +99,6 @@ export function Shell({ eu }: { eu: Advogado }) {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="user">
-            <span className="avatar" style={{ background: eu.cor }}>
-              {eu.iniciais}
-            </span>
-            <div className="user-info">
-              <strong>{eu.nome}</strong>
-              <small>{oabTexto(eu) ?? eu.cargo ?? eu.email}</small>
-            </div>
-            <button
-              className="logout-btn"
-              title="Sair"
-              onClick={() => sair.mutate()}
-              disabled={sair.isPending}
-            >
-              ⏻
-            </button>
-          </div>
-
           <div className="mini-stat">
             <span>{naSemana}</span>
             <small>meus prazos nos próx. 7 dias</small>
@@ -124,23 +106,39 @@ export function Shell({ eu }: { eu: Advogado }) {
         </div>
       </aside>
 
-      <main className="content">
-        <header>
-          <div>
-            <div className="eyebrow">{atual?.texto}</div>
-            <h1>{atual?.titulo}</h1>
-          </div>
+      <main className="main-area">
+        {/* Barra superior fixa: fica visível ao rolar a tela, como numa
+            aplicação de verdade — não some com o resto do cabeçalho. Reúne
+            busca, sino de prazos vencidos, tema e identidade do usuário
+            num único lugar, em vez de espalhados entre sidebar e cabeçalho
+            de página. */}
+        <header className="topbar">
+          <form className="global-search" onSubmit={buscar}>
+            <span className="search-ico" aria-hidden="true">⌕</span>
+            <input
+              type="search"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar processo, prazo ou tarefa..."
+              aria-label="Buscar nos seus dados"
+            />
+          </form>
 
-          <div className="header-right">
-            <form className="global-search" onSubmit={buscar}>
-              <input
-                type="search"
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                placeholder="Buscar processo, prazo ou tarefa..."
-                aria-label="Buscar nos seus dados"
-              />
-            </form>
+          <div className="topbar-right">
+            <button
+              className="icon-btn notif-btn"
+              type="button"
+              title={vencidos > 0 ? `${vencidos} prazo(s) seu(s) vencido(s)` : "Sem prazos vencidos"}
+              onClick={() => navegar("/prazos")}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6.2V11c0-3.4-1.8-6.24-5-6.98V3.5a2 2 0 1 0-4 0v.52C6.8 4.76 5 7.6 5 11v4.8L3 17.8v1H21v-1l-2-2Z"
+                />
+              </svg>
+              {vencidos > 0 && <span className="notif-badge">{vencidos}</span>}
+            </button>
 
             <button
               className="theme-btn"
@@ -151,27 +149,39 @@ export function Shell({ eu }: { eu: Advogado }) {
               {tema === "claro" ? "☾" : "☀"}
             </button>
 
-            {/* A Dra. Camila e o botão de sair moraram aqui e foram para a
-                sidebar. Essa cópia só existe para telas estreitas, onde a
-                sidebar-footer some — sem ela, ninguém conseguiria sair pelo
-                celular. */}
-            <button
-              className="logout-btn logout-btn-mobile"
-              title="Sair"
-              onClick={() => sair.mutate()}
-              disabled={sair.isPending}
-            >
-              ⏻
-            </button>
+            <div className="user">
+              <span className="avatar" style={{ background: eu.cor }}>
+                {eu.iniciais}
+              </span>
+              <div className="user-info">
+                <strong>{eu.nome}</strong>
+                <small>{oabTexto(eu) ?? eu.cargo ?? eu.email}</small>
+              </div>
+              <button
+                className="logout-btn"
+                title="Sair"
+                onClick={() => sair.mutate()}
+                disabled={sair.isPending}
+              >
+                ⏻
+              </button>
+            </div>
           </div>
         </header>
 
-        {/* key={pathname} força o React a remontar a seção a cada rota nova
-            — é isso que faz a animação de entrada (ver legado.css) tocar de
-            novo a cada navegação, em vez de só na primeira vez. */}
-        <section key={pathname}>
-          <Outlet />
-        </section>
+        <div className="content">
+          <div className="page-head">
+            <div className="eyebrow">{atual?.texto}</div>
+            <h1>{atual?.titulo}</h1>
+          </div>
+
+          {/* key={pathname} força o React a remontar a seção a cada rota nova
+              — é isso que faz a animação de entrada (ver legado.css) tocar de
+              novo a cada navegação, em vez de só na primeira vez. */}
+          <section key={pathname}>
+            <Outlet />
+          </section>
+        </div>
       </main>
     </div>
   );

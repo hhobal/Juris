@@ -411,6 +411,17 @@ nav a.active .ico{ opacity:1; }
   gap:14px;
 }
 
+/* Área à direita da sidebar: barra superior fixa + conteúdo da página
+   abaixo dela. Separada do antigo `.content` para a barra poder ocupar a
+   largura toda desta coluna, sem herdar o max-width/padding que centraliza
+   o conteúdo da página. */
+.main-area{
+  flex:1 1 auto;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+}
+
 .mini-stat{
   background:var(--surface);
   border:1px solid var(--border);
@@ -425,8 +436,7 @@ nav a.active .ico{ opacity:1; }
 /* CONTEUDO */
 
 .content{
-  flex:1 1 auto;
-  min-width:0;
+  width:100%;
   max-width:1480px;
   margin-inline:auto;
   padding:clamp(24px, 3.2vw, 44px) clamp(20px, 4vw, 52px);
@@ -450,14 +460,25 @@ nav a.active .ico{ opacity:1; }
    a isso — mas o `.toast` continua sendo fixed aqui dentro. */
 .content > section{ animation:entraConteudo .35s ease backwards; }
 
-header{
+/* ==========================================================
+   BARRA SUPERIOR
+   ========================================================== */
+
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:20;
   display:flex;
+  align-items:center;
   justify-content:space-between;
-  align-items:flex-start;
-  margin-bottom:32px;
   gap:24px;
   flex-wrap:wrap;
+  background:var(--bg-alt);
+  border-bottom:1px solid var(--border);
+  padding:14px clamp(20px, 4vw, 52px);
 }
+
+.page-head{ margin-bottom:32px; }
 
 .eyebrow{
   font-size:11.5px;
@@ -468,17 +489,22 @@ header{
   margin-bottom:6px;
 }
 
-header h1{
+.page-head h1{
   font-family:var(--font-display);
   font-weight:600;
   font-size:28px;
 }
 
-.header-right{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.topbar-right{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
 
+.global-search{ position:relative; flex:0 1 340px; min-width:200px; }
+.global-search .search-ico{
+  position:absolute; left:15px; top:50%; transform:translateY(-50%);
+  color:var(--text-faint); font-size:13px; pointer-events:none;
+}
 .global-search input{
-  width:clamp(200px, 22vw, 320px);
-  padding:11px 16px;
+  width:100%;
+  padding:11px 16px 11px 38px;
   background:var(--surface);
   border:1px solid var(--border);
   border-radius:999px;
@@ -488,7 +514,7 @@ header h1{
 }
 .global-search input:focus{ outline:none; border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft); }
 
-.theme-btn{
+.theme-btn, .icon-btn.notif-btn{
   width:38px; height:38px;
   flex-shrink:0;
   background:var(--surface);
@@ -498,20 +524,29 @@ header h1{
   font-size:15px;
   cursor:pointer;
   transition:.15s;
+  display:inline-flex; align-items:center; justify-content:center;
 }
-.theme-btn:hover{ border-color:var(--gold); color:var(--gold-ink); }
+.theme-btn:hover, .icon-btn.notif-btn:hover{ border-color:var(--gold); color:var(--gold-ink); }
 
-/* Mora na sidebar-footer agora, ocupando a largura toda dela — por isso o
-   raio de canto acompanha o do mini-stat logo abaixo, em vez do pill que
-   fazia sentido no cabeçalho horizontal de antes. */
+.notif-btn{ position:relative; }
+.notif-badge{
+  position:absolute; top:-4px; right:-4px;
+  min-width:17px; height:17px; padding:0 4px;
+  border-radius:999px;
+  background:var(--red); color:#fff;
+  border:2px solid var(--bg-alt);
+  font-family:var(--font-mono); font-size:9.5px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+}
+
 .user{
   display:flex;
   align-items:center;
   gap:10px;
   background:var(--surface);
   border:1px solid var(--border);
-  border-radius:var(--radius-md);
-  padding:10px 10px 10px 8px;
+  border-radius:999px;
+  padding:6px 12px 6px 8px;
 }
 
 .user-info{ flex:1; min-width:0; }
@@ -537,20 +572,11 @@ header h1{
 
 .logout-btn{
   background:none; border:none; color:var(--text-muted);
-  cursor:pointer; font-size:15px; padding:4px;
+  cursor:pointer; font-size:14px; padding:4px;
   border-radius:50%; transition:.15s;
+  flex-shrink:0;
 }
 .logout-btn:hover{ color:var(--red); background:var(--red-soft); }
-
-/* Só existe para telas estreitas — ver comentário no Shell.tsx. No desktop
-   o botão de sair mora dentro do cartão da sidebar-footer. */
-.logout-btn-mobile{
-  display:none;
-  width:38px; height:38px;
-  flex-shrink:0;
-  border:1px solid var(--border);
-  border-radius:50%;
-}
 
 /* ==========================================================
    CARDS / GRID
@@ -993,7 +1019,6 @@ td{ padding:15px 10px; border-bottom:1px solid var(--border); font-size:13.5px; 
   .sidebar .logo .brand-rule,
   .sidebar .logo .brand-sub{ display:none; }
   .sidebar-footer{ display:none; }
-  .logout-btn-mobile{ display:inline-flex; align-items:center; justify-content:center; }
 
   nav{
     flex-direction:row;
@@ -1018,9 +1043,14 @@ td{ padding:15px 10px; border-bottom:1px solid var(--border); font-size:13.5px; 
   .content{ padding:24px; }
   .cards, .cards-3{ grid-template-columns:1fr; }
   .kanban-board{ grid-template-columns:repeat(4, minmax(78vw, 1fr)); }
-  .header-right{ width:100%; }
-  .global-search{ flex:1; }
-  .global-search input{ width:100%; }
+
+  /* A sidebar já ocupa o topo fixo neste tamanho de tela — duas barras
+     grudadas no topo brigariam pelo mesmo espaço, então só ela fica. */
+  .topbar{ position:static; padding:12px 20px; }
+  .global-search{ flex:1 1 100%; order:1; }
+  .topbar-right{ order:2; margin-left:auto; }
+  .user-info{ display:none; }
+  .user{ padding:6px; }
 }
 
 /* Contagem de urgência ao lado do item de menu. A informação mais importante
